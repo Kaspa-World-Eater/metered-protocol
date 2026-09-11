@@ -7,6 +7,7 @@ import {
 } from './encoding.js';
 import { reconcileBabel, toleranceBound } from './reconcile.js';
 import { requiredFunding, CLOSE_FEE_SOMPI, MIN_COVENANT_SOMPI } from './reservation.js';
+import { resolveMeter, minimumTolerance, meterFor } from './meter.js';
 import type { Measurement, Offer, State } from './types.js';
 
 /**
@@ -38,9 +39,9 @@ const group = (section: string) => {
 
 test('the vector file covers every section it claims to', () => {
   assert.equal(vectors.version, 1);
-  for (const section of ['2', '3.4.1', '2.6 / 3.4', '5', '7.4a / 7.4b']) assert.ok(group(section));
+  for (const section of ['2', '3.4.1', '2.6 / 3.4', '5', '7.4a / 7.4b', '6']) assert.ok(group(section));
   const total = vectors.groups.reduce((n, g) => n + g.cases.length, 0);
-  assert.ok(total >= 26, `only ${total} cases -- the suite has shrunk`);
+  assert.ok(total >= 36, `only ${total} cases -- the suite has shrunk`);
 });
 
 for (const c of group('2').cases) {
@@ -113,4 +114,33 @@ test('§7.4a the close shapes reproduce, including both sides of the dust line',
     const expect = c.expect as unknown as { shape: { outputs: number; to: string[] } };
     assert.deepEqual(shape(given.pendingSompi, given.covenantSompi), expect.shape, c.name);
   }
+});
+
+/* ------------------------------------------------- §6, units and meters */
+
+for (const c of group('6').cases.filter((x) => x.name.startsWith('octets of'))) {
+  test(`§6 ${c.name}`, () => {
+    const given = c.given as unknown as { meter: string; content: string };
+    const expect = c.expect as unknown as { units: number; contentDigest: string };
+    assert.equal(meterFor(given.meter)(given.content), expect.units);
+    assert.equal(blake3Hex(given.content), expect.contentDigest);
+  });
+}
+
+test('§6 the tolerance floor and exactness reproduce', () => {
+  const c = group('6').cases.find((x) => x.name.includes('tolerance floor'));
+  assert.ok(c);
+  const given = c.given as unknown as { meters: string[] };
+  const expect = c.expect as unknown as { floors: number[]; exact: boolean[] };
+  assert.deepEqual(given.meters.map((m) => minimumTolerance(resolveMeter(m))), expect.floors);
+  assert.deepEqual(given.meters.map((m) => resolveMeter(m).exact), expect.exact);
+  assert.equal(expect.floors[expect.exact.indexOf(true)], 0, 'an exact meter permits zero tolerance');
+});
+
+test('§6 each meter measures exactly one unit', () => {
+  const c = group('6').cases.find((x) => x.name.includes('exactly one unit'));
+  assert.ok(c);
+  const given = c.given as unknown as { meters: string[] };
+  const expect = c.expect as unknown as { units: string[] };
+  assert.deepEqual(given.meters.map((m) => resolveMeter(m).unit), expect.units);
 });

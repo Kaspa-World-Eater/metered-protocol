@@ -43,7 +43,7 @@ const OFFER = {
   asset: 'KAS',
   sessionId: blake3Hex('metered/spec/vectors/session').slice(0, 32), // SPEC.md 3.1: 16 bytes
   unit: 'llm.output_tokens.v1',
-  tokenizer: 'o200k_base',
+  meter: 'o200k_base',
   unitPriceSompi: 3630,
   babelUnits: 550,
   maxBabels: 6,

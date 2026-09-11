@@ -60,8 +60,13 @@ you signatures and ask whether you agree they verify — including the cases whe
 ## What is not here
 
 The tokeniser vectors live separately, in `../evidence/tokenizer-vectors.json`, because they are large
-and change on a different schedule. The unit is only meaningful if you reproduce those too:
-`llm.output_tokens.v1` counts delivered assistant content under the tokeniser the Offer names.
+and change on a different schedule. `llm.output_tokens.v1` is only meaningful if you reproduce those
+too: it counts delivered assistant content under the meter the Offer names, and a meter that draws
+its boundaries elsewhere produces a different number for the same bytes.
+
+`net.bytes_delivered.v1` needs no separate file. It is counted here, in §6, because an exact meter
+has nothing to pin beyond the arithmetic — which is also why it is the unit that permits a
+`toleranceAbs` of 0.
 
 The covenant has its own suites — `contracts/metered_session.tests.json` and
 `contracts/metered_ag.tests.json` — which execute against a SilverScript simulator rather than

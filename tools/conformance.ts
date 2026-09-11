@@ -26,6 +26,7 @@ import {
 } from '../src/encoding.js';
 import { reconcileBabel, toleranceBound } from '../src/reconcile.js';
 import { requiredFunding, CLOSE_FEE_SOMPI, MIN_COVENANT_SOMPI } from '../src/reservation.js';
+import { resolveMeter, minimumTolerance, meterFor } from '../src/meter.js';
 import type { Measurement, Offer, State } from '../src/types.js';
 
 const BUYER_SK = '11'.repeat(32);
@@ -37,7 +38,7 @@ interface Group { section: string; about: string; cases: Case[] }
 
 const OFFER: Offer = signEnvelope({
   v: 1, scheme: 'metered', network: 'kaspa:testnet-10', asset: 'KAS',
-  sessionId: SESSION, unit: 'llm.output_tokens.v1', tokenizer: 'o200k_base',
+  sessionId: SESSION, unit: 'llm.output_tokens.v1', meter: 'o200k_base',
   unitPriceSompi: 3630, babelUnits: 550, maxBabels: 64,
   toleranceAbs: 1, checkpointEvery: 2, responseWindowDaa: 600,
   buyerPubkey: publicKeyHex(BUYER_SK), providerPubkey: publicKeyHex(PROVIDER_SK),
@@ -191,11 +192,42 @@ function settlementGroup(): Group {
   };
 }
 
+/** Section 6. The meters, and the property that decides each one's tolerance floor. */
+function meterGroup(): Group {
+  const texts = ['', 'hello', 'café', '計量', '\u{1F512}', 'a\nb\tc  d', 'x'.repeat(1000)];
+  const octets = meterFor('octets');
+  const names = ['octets', 'o200k_base'];
+  return {
+    section: '6',
+    about: 'Units and meters. An exact meter permits a tolerance of 0; a lossy one requires 1.',
+    cases: [
+      ...texts.map((text) => ({
+        name: `octets of ${JSON.stringify(text).slice(0, 28)}`,
+        given: { meter: 'octets', content: text },
+        expect: { units: octets(text), contentDigest: blake3Hex(text) },
+      })),
+      {
+        name: 'the tolerance floor belongs to the meter, not the protocol',
+        given: { meters: names },
+        expect: {
+          floors: names.map((m) => minimumTolerance(resolveMeter(m))),
+          exact: names.map((m) => resolveMeter(m).exact),
+        },
+      },
+      {
+        name: 'each meter measures exactly one unit',
+        given: { meters: names },
+        expect: { units: names.map((m) => resolveMeter(m).unit) },
+      },
+    ],
+  };
+}
+
 const doc = {
   version: 1,
   about: 'Conformance vectors for the metered protocol. See spec/CONFORMANCE.md.',
   offer: OFFER,
-  groups: [encodingGroup(), preimageGroup(), signatureGroup(), reconcileGroup(), settlementGroup()],
+  groups: [encodingGroup(), preimageGroup(), signatureGroup(), reconcileGroup(), settlementGroup(), meterGroup()],
 };
 
 writeFileSync('spec/conformance-vectors.json', `${JSON.stringify(doc, null, 1)}\n`);

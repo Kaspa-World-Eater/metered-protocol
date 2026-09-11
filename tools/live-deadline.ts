@@ -23,7 +23,7 @@ import { publicKeyHex } from '../src/encoding.js';
 import { serveMetered } from '../src/http/serve.js';
 import { MeteredService, type OfferTerms } from '../src/http/service.js';
 import { openSession, runBabel } from '../src/http/client.js';
-import { meterFor } from '../src/tokenizer.js';
+import { meterFor } from '../src/meter.js';
 import { shouldSettle, type ExposurePolicy } from '../src/deadline.js';
 import { loadSdk, loadAnchorKey } from './kaspa.js';
 import { compileWithState, covenantAddress } from './covenant.js';
@@ -53,7 +53,7 @@ async function main(): Promise<void> {
   const providerSk = bytesToHex(randomBytes(32));
   const terms: OfferTerms = {
     v: 1, scheme: 'metered', network: 'kaspa:testnet-10', asset: 'KAS',
-    unit: 'llm.output_tokens.v1', tokenizer: 'o200k_base',
+    unit: 'llm.output_tokens.v1', meter: 'o200k_base',
     unitPriceSompi: PRICE, babelUnits: BABEL, maxBabels: 16,
     toleranceAbs: 1, checkpointEvery: 0, responseWindowDaa: WINDOW,
   };

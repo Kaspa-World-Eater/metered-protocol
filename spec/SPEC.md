@@ -42,10 +42,10 @@ Two studies ran before this document was written. They are in `../evidence/`, se
 
 | Finding | Consequence |
 |---|---|
-| Per-babel token summation diverges by exactly 1 token in 0.08% of sessions (3 counter-examples in 3,634 adversarial trials) | `toleranceAbs` MUST be ≥ 1 |
+| Per-babel token summation diverges by exactly 1 token in 0.08% of sessions (3 counter-examples in 3,634 adversarial trials) | `toleranceAbs` MUST be ≥ 1 **for a tokeniser** — §6 |
 | Re-encoding an *interior* token slice diverges 7.6% of the time; babels tiling from zero drop that to 0.08% | Babels MUST tile from sequence position zero |
 | Per-frame tokenisation is wrong by up to 21.5% (code) and 21.2% (CJK), systematically upward | Implementations MUST reassemble before tokenising |
-| The same text under `o200k_base` vs `cl100k_base` differs by 40.9% on CJK | The Offer MUST name the tokeniser; an unnamed tokeniser is not usable |
+| The same text under `o200k_base` vs `cl100k_base` differs by 40.9% on CJK | The Offer MUST name the meter; an unnamed meter is not usable |
 | Checkpoint fee 0.002 KAS, latency p50 1,053 ms / p90 1,879 ms over 25 live anchors | Checkpoints MUST be non-blocking |
 
 ---
@@ -132,12 +132,12 @@ Sent by the provider inside the HTTP 402 response as an x402 `PaymentRequirement
 | `network` | string | CAIP-2-style, e.g. `"kaspa:testnet-10"`. |
 | `asset` | string | `"KAS"` in this version. |
 | `sessionId` | hex[16] | Provider-chosen, unique. Binds every later message. See §3.1a. |
-| `unit` | string | Versioned unit identifier. This version defines `llm.output_tokens.v1`. |
-| `tokenizer` | string | **MUST be present and publicly resolvable.** See §6. |
+| `unit` | string | Versioned unit identifier. §6 defines two. |
+| `meter` | string | **MUST be present and resolvable, and MUST measure `unit`.** See §6. |
 | `unitPriceSompi` | int | Price of one unit. MUST be ≥ 1. |
 | `babelUnits` | int | Units per reservation. **This is the exposure bound.** MUST be ≥ 1. |
 | `maxBabels` | int | Session ceiling. MUST be ≥ 1. |
-| `toleranceAbs` | int | **MUST be ≥ 1.** See §0.1. |
+| `toleranceAbs` | int | **MUST be ≥ the meter's floor** (§6): 0 for an exact meter, 1 otherwise. |
 | `checkpointEvery` | int | Chunks between checkpoints. `0` disables checkpointing. |
 | `responseWindowDaa` | int | **Relative** sequence delay. MUST be in `1..=4294967295`. See §7.3. |
 | `buyerPubkey` | hex[32] | BIP340 x-only. |
@@ -145,8 +145,9 @@ Sent by the provider inside the HTTP 402 response as an x402 `PaymentRequirement
 | `partiesCommitment` | hex[32] | `blake3(buyerPubkey ‖ providerPubkey)`. |
 | `sig` | hex[64] | Provider signature. |
 
-A buyer MUST reject an Offer with `toleranceAbs` of 0, an absent or unresolvable `tokenizer`, or a
-`responseWindowDaa` outside the stated range.
+A buyer MUST reject an Offer with a `toleranceAbs` below its meter's floor (§6), an absent or
+unresolvable `meter`, a `meter` that does not measure the named `unit`, or a `responseWindowDaa`
+outside the stated range.
 
 ### 3.1a `sessionId` novelty is the buyer's obligation
 
@@ -440,23 +441,49 @@ outside tolerance, a broken State chain and a tripped bias detector are halts.
 
 ---
 
-## 6. The unit: `llm.output_tokens.v1`
+## 6. Units and meters
 
-### 6.1 Definition
+The protocol counts integers and does not know what they represent. A **unit** names what is being
+sold; a **meter** names the procedure that turns delivered content into a number. The Offer carries
+both, and a meter that does not measure the named unit MUST be refused -- counting tokens against a
+byte price is not a rounding error, it is a different bill.
 
-Tokens in the assistant content **actually delivered to the buyer**, tokenised with the tokeniser
-named in the Offer.
+| Unit | Meter | Exact |
+|---|---|---|
+| `llm.output_tokens.v1` | `o200k_base` | no |
+| `net.bytes_delivered.v1` | `octets` | yes |
+
+### 6.0 Exact and inexact meters, and where the tolerance comes from
+
+**A meter is EXACT when two correct implementations always reach the same number for the same
+bytes.** That property decides `toleranceAbs`, and it belongs to the meter rather than to the
+protocol:
+
+| | Minimum `toleranceAbs` | Because |
+|---|---|---|
+| exact | **0**, and it SHOULD be 0 | §5 rule 3 has already agreed `contentDigest`, so the bytes are identical and the counts cannot differ. A tolerance would absorb no honest divergence and would be pure room to shave in. |
+| inexact | **1** | Tokenisation is a lossy map from bytes to a count. Two implementations can agree on every byte and still differ by one token, because the boundaries belong to the tokeniser. §0.1 measured it. |
+
+An earlier version of this document required `toleranceAbs ≥ 1` of every Offer. That rule was
+derived from tokenisation and stated as though it were a property of the protocol; adding a second
+unit is what made the difference visible.
+
+### 6.1 `llm.output_tokens.v1`
+
+Tokens in the assistant content **actually delivered to the buyer**, tokenised with the meter named
+in the Offer.
 
 **Not counted:** input tokens, system prompt, and anything the buyer does not receive.
 
-### 6.2 Hidden reasoning tokens are out of scope
+#### Hidden reasoning tokens are out of scope
 
-A model billing for internal reasoning the buyer never sees cannot be metered two-sided — the buyer
-cannot count what it was not given. Providers billing for hidden reasoning MUST either price it
-into the delivered-token rate or use `exact` for that portion. This is a limitation of the
-approach, not an omission.
+A model billing for internal reasoning the buyer never sees cannot be metered two-sided -- the
+buyer cannot count what it was not given. Providers billing for hidden reasoning MUST either price
+it into the delivered-token rate or use `exact` for that portion. This is a limitation of the
+approach, not an omission, and it is the boundary of two-sided measurement rather than a gap in
+this specification: no protocol can make a buyer able to count data it never receives.
 
-### 6.3 Counting rules
+#### Counting rules for `llm.output_tokens.v1`
 
 1. Implementations MUST **reassemble the full babel** before tokenising. Tokenising stream frames
    separately is wrong by up to 21.5% (§0.1) and MUST NOT be done.
@@ -479,6 +506,28 @@ approach, not an omission.
    and compares the token IDs.
 
 ---
+
+
+### 6.2 `net.bytes_delivered.v1`
+
+**Octets of the content actually delivered to the buyer, exactly as `contentDigest` covers them.**
+The meter is `octets`, and it is exact.
+
+1. Count the bytes as delivered. **No re-encoding, no normalisation, no decompression.** If a
+   transport compressed the body, the unit is the bytes the buyer received and digested, not the
+   bytes before or after any transform the transport applied. `contentDigest` is computed over the
+   same bytes, which is what makes the two sides agree by construction.
+2. The rules of §6.1's counting section that concern *what* is counted apply unchanged:
+   reassemble the whole babel before counting, and tile babels from sequence position zero.
+3. `toleranceAbs` SHOULD be 0. A non-zero tolerance is permitted and is a decision to accept
+   shaving, since there is no honest divergence for it to absorb.
+
+This unit is why the protocol names a meter rather than a tokeniser. Anything a buyer physically
+receives and can count -- bytes, frames, records -- fits the same machinery, and only §6 changes.
+
+**What does NOT fit:** a resource the buyer never receives. Storage at rest has nothing delivered
+to count and needs proof of continued possession, which is a different mechanism with different
+assumptions. **This protocol meters delivery, not possession.**
 
 ## 7. Settlement
 

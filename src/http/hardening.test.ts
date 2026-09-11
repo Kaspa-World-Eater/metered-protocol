@@ -7,7 +7,7 @@ import { MAX_BODY_BYTES } from './serve.js';
 import { type OfferTerms } from './service.js';
 import { withMeteredServer, type Harness } from './harness.js';
 import { readOffer, runBabel, openSession } from './client.js';
-import { meterFor } from '../tokenizer.js';
+import { meterFor } from '../meter.js';
 import type { Offer } from '../types.js';
 
 /**
@@ -28,7 +28,7 @@ const deliver = (prompt: string, max: number) =>
 
 const TERMS: OfferTerms = {
   v: 1, scheme: 'metered', network: 'kaspa:testnet-10', asset: 'KAS',
-  unit: 'llm.output_tokens.v1', tokenizer: 'o200k_base',
+  unit: 'llm.output_tokens.v1', meter: 'o200k_base',
   unitPriceSompi: 3630, babelUnits: 20, maxBabels: 8,
   toleranceAbs: 2, checkpointEvery: 0, responseWindowDaa: 600,
 };

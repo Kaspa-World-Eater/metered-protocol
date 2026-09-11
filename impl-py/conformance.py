@@ -93,6 +93,22 @@ def run_settlement(doc: dict, offer: dict, r: Results) -> None:
             r.expect("§5 rule 4 tolerance does not scale", bounds, want["bounds"])
 
 
+def run_meters(doc: dict, r: Results) -> None:
+    for case in group(doc, "6")["cases"]:
+        given, want = case["given"], case["expect"]
+        if "content" in given:
+            r.expect(f"§6 {case['name']} (units)", metered.octets(given["content"]), want["units"])
+            r.expect(f"§6 {case['name']} (digest)", metered.blake3_hex(given["content"]), want["contentDigest"])
+        elif "floors" in want:
+            floors = [metered.minimum_tolerance(m) for m in given["meters"]]
+            exact = [metered.METERS[m][1] for m in given["meters"]]
+            r.expect("§6 tolerance floors", floors, want["floors"])
+            r.expect("§6 meter exactness", exact, want["exact"])
+        else:
+            units = [metered.METERS[m][0] for m in given["meters"]]
+            r.expect("§6 meter units", units, want["units"])
+
+
 def main() -> int:
     with open(VECTORS, encoding="utf-8") as fh:
         doc = json.load(fh)
@@ -104,6 +120,7 @@ def main() -> int:
     run_signatures(doc, r)
     run_reconcile(doc, offer, r)
     run_settlement(doc, offer, r)
+    run_meters(doc, r)
 
     print(f"\n  metered, second implementation (Python) against spec/conformance-vectors.json\n")
     for failure in r.failed:

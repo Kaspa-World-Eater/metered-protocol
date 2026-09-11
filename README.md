@@ -10,8 +10,8 @@ anything, and for a fifth of a cent, disputing it is not worth anyone's time.
 sides count what was actually delivered, and a small program on Kaspa releases the money whether or
 not either party cooperates at the end.
 
-**The buyer counts the tokens it was given — not the ones it was told about.** Everything else here
-is bookkeeping around that sentence.
+**The buyer counts what it was given — not what it was told about.** Everything else here is
+bookkeeping around that sentence.
 
 - **[Read the explainer](https://kaspahttp402.github.io/metered-protocol/)** — the idea, in plain
   terms, for people who are not going to read a specification.
@@ -28,8 +28,8 @@ babel, receives it, counts it, agrees it, and only then authorises the next. The
 exposure bound: the most either side can lose if the other turns dishonest mid-session, fixed
 before anything is spent.
 
-**Both sides count.** After each babel the buyer measures it too, with the same tokeniser the
-seller named up front. The seller's figure stops being an invoice and becomes a claim standing next
+**Both sides count.** After each babel the buyer measures it too, with the same *meter* the seller
+named up front. The seller's figure stops being an invoice and becomes a claim standing next
 to the buyer's. If they agree within tolerance, the lower figure is billed. If they do not, the
 session stops — there is no arbiter, because an arbiter would have to be trusted.
 
@@ -41,7 +41,7 @@ Neither party is trusted for anything. The arithmetic does not leave room.
 |---|---|
 | `spec/SPEC.md` | the protocol, normatively |
 | `spec/CONFORMANCE.md` | how to check an implementation, and the four traps that catch people |
-| `spec/conformance-vectors.json` | 27 cases: canonical bytes, the settlement preimage, signatures, reconciliation, settlement |
+| `spec/conformance-vectors.json` | 36 cases: canonical bytes, the settlement preimage, signatures, reconciliation, settlement, meters |
 | `spec/worked-example.txt` | a complete session, generated, with real signatures |
 | `src/` | reference implementation, TypeScript |
 | `impl-py/` | a second implementation, Python, written from the specification alone |
@@ -53,14 +53,14 @@ Neither party is trusted for anything. The arithmetic does not leave room.
 
 ```bash
 npm install
-npm test                 # 176 tests
+npm test                 # 190 tests
 npm run conformance      # regenerate the vectors
 npm run conformance:py   # the second implementation, against the same file
 ```
 
 `impl-py/` shares no code with `src/`. It was written from `spec/SPEC.md` and implements BIP340
 verification from the BIP rather than importing it, so the two agree on the specification rather
-than on a shared library. All 52 assertions pass.
+than on a shared library. All 69 assertions pass.
 
 The covenant suites need [SilverScript](https://github.com/kaspanet/silverscript) and a patched
 debugger; the chain tooling additionally needs a rusty-kaspa WASM build (`METERED_KASPA_SDK`) and a
@@ -82,6 +82,8 @@ What has been exercised end to end:
 - Two implementations agreeing on every conformance vector.
 - The tokeniser pinned across languages, token boundary by token boundary, against Python
   `tiktoken` over mixed scripts, emoji, combining marks and pathological whitespace.
+- Two different units settled through the same unchanged protocol — tokens and delivered bytes —
+  which is what distinguishes a unit-agnostic design from one that merely uses abstract field names.
 
 Figures: the covenant is **504 bytes** of a 520-byte script limit; a State is **72 bytes** signed;
 a checkpoint costs **0.002 KAS**; the response window is **600 blocks, about 60 seconds** at the

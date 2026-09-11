@@ -8,7 +8,7 @@
   "asset": "KAS",
   "sessionId": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
   "unit": "llm.output_tokens.v1",
-  "tokenizer": "o200k_base",
+  "meter": "o200k_base",
   "unitPriceSompi": 3630,
   "babelUnits": 550,
   "maxBabels": 64,
@@ -18,7 +18,7 @@
   "buyerPubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
   "providerPubkey": "466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
   "partiesCommitment": "62e84a374e44f83866d72147508efd746dad5e0d599269e79392741fa8781ab0",
-  "sig": "95907f037642d79bba55a953805f27dca8b493dbfa61876abf6cad0b0fd464e2f052ab6c36a68fb7c0bdfa87d6722c44c68f32ff2e8a44c30fd1fab92ee03d10"
+  "sig": "cd3f63577a5360f87274852648969c0abb8516c159e8bc9e4ab0012220c224c17caa5bdf4dbcba6e4339cf07c728e833eb5680020fcc85ca746693a8cf2005bb"
  },
  "groups": [
   {
@@ -195,7 +195,7 @@
        "asset": "KAS",
        "sessionId": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
        "unit": "llm.output_tokens.v1",
-       "tokenizer": "o200k_base",
+       "meter": "o200k_base",
        "unitPriceSompi": 3630,
        "babelUnits": 550,
        "maxBabels": 64,
@@ -205,7 +205,7 @@
        "buyerPubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
        "providerPubkey": "466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
        "partiesCommitment": "62e84a374e44f83866d72147508efd746dad5e0d599269e79392741fa8781ab0",
-       "sig": "95907f037642d79bba55a953805f27dca8b493dbfa61876abf6cad0b0fd464e2f052ab6c36a68fb7c0bdfa87d6722c44c68f32ff2e8a44c30fd1fab92ee03d10"
+       "sig": "cd3f63577a5360f87274852648969c0abb8516c159e8bc9e4ab0012220c224c17caa5bdf4dbcba6e4339cf07c728e833eb5680020fcc85ca746693a8cf2005bb"
       },
       "publicKey": "466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
       "field": "sig"
@@ -224,7 +224,7 @@
        "asset": "KAS",
        "sessionId": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
        "unit": "llm.output_tokens.v1",
-       "tokenizer": "o200k_base",
+       "meter": "o200k_base",
        "unitPriceSompi": 3630,
        "babelUnits": 550,
        "maxBabels": 64,
@@ -234,7 +234,7 @@
        "buyerPubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
        "providerPubkey": "466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
        "partiesCommitment": "62e84a374e44f83866d72147508efd746dad5e0d599269e79392741fa8781ab0",
-       "sig": "95907f037642d79bba55a953805f27dca8b493dbfa61876abf6cad0b0fd464e2f052ab6c36a68fb7c0bdfa87d6722c44c68f32ff2e8a44c30fd1fab92ee03d10"
+       "sig": "cd3f63577a5360f87274852648969c0abb8516c159e8bc9e4ab0012220c224c17caa5bdf4dbcba6e4339cf07c728e833eb5680020fcc85ca746693a8cf2005bb"
       },
       "publicKey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
       "field": "sig"
@@ -254,7 +254,7 @@
        "cumulativeSompi": 1996500,
        "prevState": null
       },
-      "signature": "ab6a9801b74b53828a67047c2bb287efc7e03197dbc12e8d8bd29fc4f6356f93f771df58caca7e7400a3798b311e3bc675cad559fcffe660130ce698c0ee654d",
+      "signature": "0287a7be0fe767b02a93f24b7d6a4ade4267fec8f6e6c57f91df3c97aa8bb989ba16488e1cc93bc7c70658b3a73cecc4fda5490c29523bdaca1282d2051a940b",
       "publicKey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
      },
      "expect": {
@@ -272,7 +272,7 @@
        "cumulativeSompi": 1996501,
        "prevState": null
       },
-      "signature": "ab6a9801b74b53828a67047c2bb287efc7e03197dbc12e8d8bd29fc4f6356f93f771df58caca7e7400a3798b311e3bc675cad559fcffe660130ce698c0ee654d",
+      "signature": "0287a7be0fe767b02a93f24b7d6a4ade4267fec8f6e6c57f91df3c97aa8bb989ba16488e1cc93bc7c70658b3a73cecc4fda5490c29523bdaca1282d2051a940b",
       "publicKey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
      },
      "expect": {
@@ -297,7 +297,7 @@
        "cumulativeUnits": 550,
        "contentDigest": "063eca1a984bed0d83f038c2c63877d2d2fedb4613fc12bf45fa2c45bad2d1cc",
        "measurementId": "55af581dd51e7375c29f247b70eea67d",
-       "sig": "f908a4289eb38d02d0e6c515e5ce23f627623b9ff8bb6574ca4197be008e21d517b022ab37994beea0805fe6a553c0e27779d570c1a843c75b8cec602ab55f4a"
+       "sig": "f5faee79a54fe477d5af77ee9581e060e4974aaf45957021f8ca4c99d95d2bcb0bff701979ef9bd0534b4510c2edee1e1b253a4dfe6f808f26807c4a4ad6eaa6"
       },
       "provider": {
        "v": 1,
@@ -308,7 +308,7 @@
        "cumulativeUnits": 550,
        "contentDigest": "063eca1a984bed0d83f038c2c63877d2d2fedb4613fc12bf45fa2c45bad2d1cc",
        "measurementId": "c29347185f14bda8c1012d9e143c6c2b",
-       "sig": "2f5334b842baf4f7b18b39178e19816781084c321aef12b3585ea42b788cce2505408b9e23098e04d7747e22755fad7c811bc01da9e59afa8fa3b71f76c80bcc"
+       "sig": "613908b1e2343ba70e421ecec807f8c91008d441ee2d63a4eb03f8f8b864fdacf19a10da7b2d9a865372e5692e5fefa6d298449936b6728bbd8bbaa5bc5e95c1"
       },
       "seq": 0,
       "toleranceAbs": 1
@@ -332,7 +332,7 @@
        "cumulativeUnits": 549,
        "contentDigest": "063eca1a984bed0d83f038c2c63877d2d2fedb4613fc12bf45fa2c45bad2d1cc",
        "measurementId": "55af581dd51e7375c29f247b70eea67d",
-       "sig": "094f68b693015ccd3d945c9a3df3cf74339cdb2ef49d0a3683cdc4aeced2b3ac8536adfe80d72d6228990c77dd0c638d644f981ff32eff0aa0fa2576ba6701aa"
+       "sig": "c3bcebc010a2f5290f5a1094af53d0b796914d387bfadf3e3eaa062ca4206a8df82cab3685dd74f5ceb02ded54585a6271cb24b2b39eb4bf1bbf11c563b5334c"
       },
       "provider": {
        "v": 1,
@@ -343,7 +343,7 @@
        "cumulativeUnits": 550,
        "contentDigest": "063eca1a984bed0d83f038c2c63877d2d2fedb4613fc12bf45fa2c45bad2d1cc",
        "measurementId": "c29347185f14bda8c1012d9e143c6c2b",
-       "sig": "eef0114a0511bd234023229c9f96b8940060470aced590c6af9c491cde2ea1a7a1b6d414189d5d3675e4adc152d7ac1e76e84a3f2db0756460d751698a4b32de"
+       "sig": "f5abf650c2f49bd7e4d3d00a0fb12a10e047241dc3396dbde53da654b93a564a7dbb07b59fc84df21f6e481b077f4a7ae0f6dafa7e33a8e5de1ae5ba14f36b88"
       },
       "seq": 0,
       "toleranceAbs": 1
@@ -367,7 +367,7 @@
        "cumulativeUnits": 500,
        "contentDigest": "063eca1a984bed0d83f038c2c63877d2d2fedb4613fc12bf45fa2c45bad2d1cc",
        "measurementId": "55af581dd51e7375c29f247b70eea67d",
-       "sig": "2f15c081057630dae58bc5f316e1af91afa1af72e3ad44b8cec74998cb06f963d66f213d69536e28114c4382bfad1f550c28d27f8c1394a4925bb270d8eeb7d8"
+       "sig": "e954fd14ffd3f187597757803aca1e894b9169e3b3c406d56dd7e913193e76896a575ce7342ef59c0618ab9b725f43bbe8c328cd69c73e6ba3e026bfea09be00"
       },
       "provider": {
        "v": 1,
@@ -378,7 +378,7 @@
        "cumulativeUnits": 550,
        "contentDigest": "063eca1a984bed0d83f038c2c63877d2d2fedb4613fc12bf45fa2c45bad2d1cc",
        "measurementId": "c29347185f14bda8c1012d9e143c6c2b",
-       "sig": "0b015751fb5916d8b2b8204bb3d5db8e8c7595b31f6bc60a45076b0f938e3669aa86c623720986f4107f6b75b90ee645bffbc3eb791abcb10415621f7c73fd7a"
+       "sig": "6a709b3adb55331aec5dc2bdcb4205ea15805c13e96fc657756db7ee90f13335dac99660f045ac0143d9046a4661cf395a82b55099b1de3a48be6d4ec59c8d57"
       },
       "seq": 0,
       "toleranceAbs": 1
@@ -401,7 +401,7 @@
        "cumulativeUnits": 550,
        "contentDigest": "a7875304962469af06a8e9efcb3cf30f65312f5258879d66b2349826bb91a0af",
        "measurementId": "55af581dd51e7375c29f247b70eea67d",
-       "sig": "692fae8cc26736c803cd7b001e972233e4b3dc119b681fa724597c233e3c30483bcedd6894ac28021dc0e1b5e74146a1579f9081fbe611ca28e85bce118c03a0"
+       "sig": "df3b629a53c490dc61005c7850e4131e5237a2cd9beec171f8d7ccf5d8389bc70226b51a583947e5b46b6d64f0c01adfd97c7516e24c5c41e672e4e24711382b"
       },
       "provider": {
        "v": 1,
@@ -412,7 +412,7 @@
        "cumulativeUnits": 550,
        "contentDigest": "063eca1a984bed0d83f038c2c63877d2d2fedb4613fc12bf45fa2c45bad2d1cc",
        "measurementId": "c29347185f14bda8c1012d9e143c6c2b",
-       "sig": "fea02b5aa75e1840baac679daee71f46345e8bc1577714af13b1099998fac8cc26745f6e8f3fb02546abe921269dc33e5bc1d9a9c6eda63679e49b2d8dba7fce"
+       "sig": "38046177573553544cf0ab622540d77f853daa5421148829afbd805caf6637e16afe9c1cc3b0fa43c85ae34dd7ee4a97dd2eaf2a7da3419a248b08700087d0c3"
       },
       "seq": 0,
       "toleranceAbs": 1
@@ -551,6 +551,123 @@
        1,
        1,
        1
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "section": "6",
+   "about": "Units and meters. An exact meter permits a tolerance of 0; a lossy one requires 1.",
+   "cases": [
+    {
+     "name": "octets of \"\"",
+     "given": {
+      "meter": "octets",
+      "content": ""
+     },
+     "expect": {
+      "units": 0,
+      "contentDigest": "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"
+     }
+    },
+    {
+     "name": "octets of \"hello\"",
+     "given": {
+      "meter": "octets",
+      "content": "hello"
+     },
+     "expect": {
+      "units": 5,
+      "contentDigest": "ea8f163db38682925e4491c5e58d4bb3506ef8c14eb78a86e908c5624a67200f"
+     }
+    },
+    {
+     "name": "octets of \"café\"",
+     "given": {
+      "meter": "octets",
+      "content": "café"
+     },
+     "expect": {
+      "units": 5,
+      "contentDigest": "e4e52b2a0ab9d8584bf4b913af316d96865f92f305b17a0d50b6677bd9ec71c0"
+     }
+    },
+    {
+     "name": "octets of \"計量\"",
+     "given": {
+      "meter": "octets",
+      "content": "計量"
+     },
+     "expect": {
+      "units": 6,
+      "contentDigest": "6d43d03d507ab958e776186a509420151fdc522d5a2f9496bee3fb3ffb4fab5b"
+     }
+    },
+    {
+     "name": "octets of \"🔒\"",
+     "given": {
+      "meter": "octets",
+      "content": "🔒"
+     },
+     "expect": {
+      "units": 4,
+      "contentDigest": "0ab675acfca644fe08e976223ed7788f5b827dc7f75e1a3d85fd84c4e1a94dbe"
+     }
+    },
+    {
+     "name": "octets of \"a\\nb\\tc  d\"",
+     "given": {
+      "meter": "octets",
+      "content": "a\nb\tc  d"
+     },
+     "expect": {
+      "units": 8,
+      "contentDigest": "52a61701c211c186592c79081a889b571ffadb782263c134b0d9edebfcf349a6"
+     }
+    },
+    {
+     "name": "octets of \"xxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "given": {
+      "meter": "octets",
+      "content": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+     },
+     "expect": {
+      "units": 1000,
+      "contentDigest": "ff6f2cf7750b0d32858b758ef1cd7971064f53e81ec62ff560a953792599ca69"
+     }
+    },
+    {
+     "name": "the tolerance floor belongs to the meter, not the protocol",
+     "given": {
+      "meters": [
+       "octets",
+       "o200k_base"
+      ]
+     },
+     "expect": {
+      "floors": [
+       0,
+       1
+      ],
+      "exact": [
+       true,
+       false
+      ]
+     }
+    },
+    {
+     "name": "each meter measures exactly one unit",
+     "given": {
+      "meters": [
+       "octets",
+       "o200k_base"
+      ]
+     },
+     "expect": {
+      "units": [
+       "net.bytes_delivered.v1",
+       "llm.output_tokens.v1"
       ]
      }
     }

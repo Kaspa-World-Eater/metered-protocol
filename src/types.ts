@@ -14,7 +14,7 @@ export interface Offer {
   asset: 'KAS';
   sessionId: string;
   unit: string;
-  tokenizer: string;
+  meter: string;
   unitPriceSompi: number;
   babelUnits: number;
   maxBabels: number;

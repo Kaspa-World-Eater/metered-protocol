@@ -4,6 +4,7 @@ import type { AddressInfo } from 'node:net';
 import type { Server } from 'node:http';
 import { publicKeyHex, signEnvelope, digestHex } from '../encoding.js';
 import { serveMetered } from './serve.js';
+import { meterFor } from '../meter.js';
 import { MeteredService, type OfferTerms } from './service.js';
 import { openSession, runBabel } from './client.js';
 import type { Anchor } from '../checkpoint.js';
@@ -21,15 +22,15 @@ const OTHER_SK = '33'.repeat(32);
 const PROVIDER_SK = '22'.repeat(32);
 const PRICE = 3630;
 
-const meter = (content: string) => content.trim().split(/\s+/).filter(Boolean).length;
-const deliver = (prompt: string, maxUnits: number) =>
-  Array.from({ length: maxUnits }, (_, i) => `${prompt}-${i}`).join(' ');
+const meter = meterFor('octets');
+/** Exactly `maxUnits` ASCII bytes, beginning with the prompt so a test can tell sessions apart. */
+const deliver = (prompt: string, maxUnits: number) => `${prompt}${'x'.repeat(maxUnits)}`.slice(0, maxUnits);
 
 const TERMS: OfferTerms = {
   v: 1, scheme: 'metered', network: 'kaspa:testnet-10', asset: 'KAS',
-  unit: 'words.v1', tokenizer: 'whitespace',
+  unit: 'net.bytes_delivered.v1', meter: 'octets',
   unitPriceSompi: PRICE, babelUnits: 10, maxBabels: 8,
-  toleranceAbs: 1, checkpointEvery: 0, responseWindowDaa: 600,
+  toleranceAbs: 0, checkpointEvery: 0, responseWindowDaa: 600,
 };
 
 interface Fixture { base: string; service: MeteredService; server: Server }

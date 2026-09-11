@@ -14,7 +14,7 @@ const SESSION = 'a1'.repeat(16);
 
 const BASE: Offer = {
   v: 1, scheme: 'metered', network: 'kaspa:testnet-10', asset: 'KAS',
-  sessionId: SESSION, unit: 'llm.output_tokens.v1', tokenizer: 'o200k_base',
+  sessionId: SESSION, unit: 'llm.output_tokens.v1', meter: 'o200k_base',
   unitPriceSompi: 3630, babelUnits: 550, maxBabels: 64,
   toleranceAbs: 1, checkpointEvery: 2, responseWindowDaa: 600,
   buyerPubkey: publicKeyHex(BUYER_SK), providerPubkey: publicKeyHex(PROVIDER_SK),

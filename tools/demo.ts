@@ -11,9 +11,10 @@
  *   expire         -> the money splits: provider paid what it earned, buyer refunded
  *
  * WHAT IS REAL AND WHAT IS NOT, stated plainly. The transport, the signatures, the covenant, the
- * transactions and the coins are all real, and so is the COUNTING: both sides run the real
- * `o200k_base` tokeniser over SPEC.md 6's real unit, `llm.output_tokens.v1`, and src/tokenizer.ts
- * is pinned id-for-id against the Python tiktoken every number in SPEC.md was measured with.
+ * transactions and the coins are all real, and so is the COUNTING: both sides run a real meter from
+ * src/meter.ts over a real unit from SPEC.md 6 -- `o200k_base` over `llm.output_tokens.v1`, pinned
+ * id-for-id against the Python tiktoken every number in SPEC.md was measured with, or `octets`
+ * over `net.bytes_delivered.v1` with `--bytes`.
  *
  * What is still not real is the CONTENT: generated text rather than model output, because
  * metering something is the claim being demonstrated and wiring a model in would add an API key
@@ -25,12 +26,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import type { AddressInfo } from 'node:net';
-import { blake3 } from '@noble/hashes/blake3';
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
-import { meterFor } from '../src/tokenizer.js';
-import { demoModel, type ModelSource } from './model.js';
+import { bytesToHex } from '@noble/hashes/utils';
+import { meterFor } from '../src/meter.js';
+import { demoModel } from './model.js';
 import { fileStore } from '../src/store.js';
-import { publicKeyHex, signEnvelope, signState } from '../src/encoding.js';
+import { publicKeyHex, signState } from '../src/encoding.js';
 import { serveMetered } from '../src/http/serve.js';
 import { MeteredService, type OfferTerms } from '../src/http/service.js';
 import { kaspaAnchor } from './anchor.js';
@@ -38,6 +38,7 @@ import { openSession, runBabel } from '../src/http/client.js';
 import { loadSdk, loadAnchorKey } from './kaspa.js';
 import { compileWithState, covenantAddress } from './covenant.js';
 import { preflightSigscript, awaitUtxo, withState, buildExpire, awaitWindow, closeOutputs, x, type Any } from './live-steps.js';
+import { reportClose, reportCheckpoints, announceModel } from './demo-report.js';
 import type { Offer, State } from '../src/types.js';
 
 const NETWORK = 'testnet-10' as const;
@@ -55,9 +56,16 @@ const PRICE = 3630;
 const CHUNK = 10;
 const CHUNKS = 3;
 
-const TOKENIZER = 'o200k_base';
+/**
+ * `npm run demo -- --bytes` meters net.bytes_delivered.v1 instead, which is the second unit and
+ * the exact one: no tolerance is needed, because agreeing on contentDigest already means agreeing
+ * on the length. Nothing but these three lines changes -- that is the point of the exercise.
+ */
+const BYTES = process.argv.includes('--bytes');
+const UNIT = BYTES ? 'net.bytes_delivered.v1' : 'llm.output_tokens.v1';
+const METER = BYTES ? 'octets' : 'o200k_base';
 const dir = mkdtempSync(join(tmpdir(), 'metered-demo-'));
-const meter = meterFor(TOKENIZER);
+const meter = meterFor(METER);
 const generated = (prompt: string, max: number) =>
   Array.from({ length: max }, (_, i) => `${prompt}${i}`).join(' ');
 
@@ -112,38 +120,25 @@ async function runSession(
   }
 }
 
-/** Read the close back off the chain and say which of the three shapes it took. */
-async function reportClose(
-  rpc: Any, outs: { address: string; amount: bigint }[], providerAddr: string, owed: number, units: number,
-): Promise<void> {
-  const first = outs[0];
-  if (!first) throw new Error('no close outputs');
-  if (!(await awaitUtxo(rpc, first.address, first.amount))) throw new Error('the close did not land');
-  if (outs.length === 1) {
-    const to = first.address === providerAddr ? 'provider' : 'buyer';
-    console.log(`\n     ${owed} sompi earned is BELOW the KIP-9 floor, so it cannot be paid as`);
-    console.log(`     its own output. It folded into the ${to}'s ${Number(first.amount) / 1e8} TKAS.`);
-    console.log('     Before Finding G was fixed, a session this small locked the balance forever.\n');
-    return;
-  }
-  console.log(`\n     provider earned ${Number(first.amount) / 1e8} TKAS for ${units} tokens`);
-  console.log(`     buyer refunded  ${Number(outs[1]!.amount) / 1e8} TKAS\n`);
-}
-
-/** Checkpoint records, with the txid that makes one usable as evidence. */
-function reportCheckpoints(records: { seq: number; status: string; txid?: string; error?: string }[]): void {
-  for (const c of records) {
-    const where = c.txid ? `   ${c.txid}` : c.error ? `   ${c.error}` : '';
-    console.log(`     seq ${c.seq}       ${c.status}${where}`);
-  }
-}
-
-/** Say what is behind the meter, so a reader never has to guess whether it was real. */
-function announceModel(source: ModelSource | null): void {
-  if (!source) return;
+/**
+ * TERMS ONLY -- no sessionId, no buyer, no parties commitment. The server mints those when a buyer
+ * asks, because an Offer commits to blake3(buyer || provider) and cannot be signed for someone who
+ * has not turned up yet. That is also what lets one server hold many sessions.
+ *
+ * The tolerance comes from the METER (SPEC.md 6.0): 0 for octets, which is exact, and 1 for a
+ * tokeniser, which is not.
+ */
+function announceTerms(): OfferTerms {
+  const terms: OfferTerms = {
+    v: 1, scheme: 'metered', network: 'kaspa:testnet-10', asset: 'KAS',
+    unit: UNIT, meter: METER,
+    unitPriceSompi: PRICE, babelUnits: CHUNK, maxBabels: 16,
+    toleranceAbs: BYTES ? 0 : 1, checkpointEvery: 2, responseWindowDaa: WINDOW,
+  };
   console.log(`
-  0. MODEL      ${source.model}, ${source.reportedTokens.length} completions`);
-  console.log(`                the model reports ${source.reportedTokens.join(', ')} output tokens`);
+  1. TERMS      ${CHUNK} units of ${UNIT} per babel at ${PRICE} sompi each`);
+  console.log(`                meter ${METER}, tolerance ${terms.toleranceAbs}`);
+  return terms;
 }
 
 async function main(): Promise<void> {
@@ -161,16 +156,7 @@ async function main(): Promise<void> {
   const source = await demoModel(USE_MODEL, CHUNK);
   announceModel(source);
 
-  // TERMS ONLY -- no sessionId, no buyer, no parties commitment. The server mints those when a
-  // buyer asks, because an Offer commits to blake3(buyer || provider) and cannot be signed for
-  // someone who has not turned up yet. That is also what lets one server hold many sessions.
-  const terms: OfferTerms = {
-    v: 1, scheme: 'metered', network: 'kaspa:testnet-10', asset: 'KAS',
-    unit: 'llm.output_tokens.v1', tokenizer: TOKENIZER,
-    unitPriceSompi: PRICE, babelUnits: CHUNK, maxBabels: 16,
-    toleranceAbs: 1, checkpointEvery: 2, responseWindowDaa: WINDOW,
-  };
-  console.log(`\n  1. TERMS      ${CHUNK} ${TOKENIZER} tokens per chunk at ${PRICE} sompi each`);
+  const terms = announceTerms();
 
   const sdk = await loadSdk();
   const networkId = new sdk.NetworkId(NETWORK);
@@ -215,7 +201,6 @@ async function main(): Promise<void> {
     const checkpoints = service.checkpointsFor(sessionId);
     console.log(`\n  3. ANCHORED   ${checkpoints.length} checkpoint(s), dispatched mid-session without it waiting`);
     reportCheckpoints(checkpoints);
-    void blake3; void hexToBytes; void signEnvelope;
 
     const ctor = [x(parties), x(sessionId), WINDOW, -1, 0];
     const outRedeem = withState(opened.hex, state.seq, state.cumulativeSompi);
@@ -264,18 +249,14 @@ async function main(): Promise<void> {
     console.log(`  5. CLOSED     ${closeId}`);
     await reportClose(rpc, outs, providerAddr, state.cumulativeSompi, state.cumulativeUnits);
 
-    // The same checkpoints, read again now the session is over. They said "pending" above because
+    // The same checkpoints, read again now the session is over. They said `pending` above because
     // the session did not wait for them, which is SPEC.md 8's rule; they have since resolved on
-    // their own. A checkpoint carries its txid so a future reader can fetch the block and check
-    // the payload rather than taking this process's word for it.
-    // The session never waited for these (SPEC.md 8). This report does, ONCE, now that the
-    // session is over -- otherwise every line below reads `pending`, which is the state a record
-    // is born in and says nothing about whether the anchor worked.
+    // their own. The wait happens ONCE, here, rather than in the session -- and a checkpoint
+    // carries its txid so a future reader can fetch the block and check the payload rather than
+    // taking this process's word for it.
     await service.checkpointsSettled(sessionId);
     console.log('  6. CHECKPOINTS, re-read now the session is done:');
-    for (const c of service.checkpointsFor(sessionId)) {
-      console.log(`     seq ${c.seq}       ${c.status}${c.txid ? `   ${c.txid}` : ''}${c.error ? `   ${c.error}` : ''}`);
-    }
+    reportCheckpoints(service.checkpointsFor(sessionId));
     console.log('');
   } finally {
     await rpc.disconnect().catch(() => undefined);

@@ -14,7 +14,7 @@ const CHUNK = 550;
 
 const OFFER: Offer = signEnvelope({
   v: 1, scheme: 'metered', network: 'kaspa:testnet-10', asset: 'KAS',
-  sessionId: SESSION, unit: 'llm.output_tokens.v1', tokenizer: 'o200k_base',
+  sessionId: SESSION, unit: 'llm.output_tokens.v1', meter: 'o200k_base',
   unitPriceSompi: PRICE, babelUnits: CHUNK, maxBabels: 64,
   toleranceAbs: 1, checkpointEvery: 2, responseWindowDaa: 600,
   buyerPubkey: publicKeyHex(BUYER_SK), providerPubkey: publicKeyHex(PROVIDER_SK),

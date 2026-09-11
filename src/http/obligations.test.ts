@@ -7,7 +7,7 @@ import { publicKeyHex, signEnvelope, blake3Hex } from '../encoding.js';
 import { ProviderSession } from './provider.js';
 import { fileStore } from '../store.js';
 import { memoryStore, SignerObligationError } from '../signer.js';
-import { meterFor } from '../tokenizer.js';
+import { meterFor } from '../meter.js';
 import type { Measurement, Offer, Reservation } from '../types.js';
 
 /**
@@ -33,7 +33,7 @@ const SESSION = 'a1'.repeat(16);
 const OFFER = signEnvelope(
   {
     v: 1, scheme: 'metered', network: 'kaspa:testnet-10', asset: 'KAS',
-    sessionId: SESSION, unit: 'llm.output_tokens.v1', tokenizer: 'o200k_base',
+    sessionId: SESSION, unit: 'llm.output_tokens.v1', meter: 'o200k_base',
     unitPriceSompi: 3630, babelUnits: 40, maxBabels: 8,
     toleranceAbs: 2, checkpointEvery: 0, responseWindowDaa: 600,
     buyerPubkey: publicKeyHex(BUYER_SK), providerPubkey: publicKeyHex(PROVIDER_SK),

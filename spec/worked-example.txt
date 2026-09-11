@@ -7,8 +7,8 @@ KEYS (deterministic, test only)
   provider 5538a1b5e76410a252646236c48e2ed992d53d12f21adf12c498da4025400e10
 
 OFFER (canonical form, signed by provider)
-{"asset":"KAS","babelUnits":550,"buyerPubkey":"e265dd7b335cac44c9dca1bcbed57c65f8727c8b880abfef81aca1e2541978d6","checkpointEvery":3,"maxBabels":6,"network":"kaspa:testnet-10","partiesCommitment":"18cd0be7e8d708d2e6ef3e36de5dfef5387406a9ebb4fdda3747ccc8695aefbf","providerPubkey":"5538a1b5e76410a252646236c48e2ed992d53d12f21adf12c498da4025400e10","responseWindowDaa":43200,"scheme":"metered","sessionId":"122994bb40a0ebd3bc80c184ad1cec31","tokenizer":"o200k_base","toleranceAbs":1,"unit":"llm.output_tokens.v1","unitPriceSompi":3630,"v":1}
-  digest cf558c4d0e8285cea0066523381133a1ffac2f9b9a1441d59aa4998e64a22b80
+{"asset":"KAS","babelUnits":550,"buyerPubkey":"e265dd7b335cac44c9dca1bcbed57c65f8727c8b880abfef81aca1e2541978d6","checkpointEvery":3,"maxBabels":6,"meter":"o200k_base","network":"kaspa:testnet-10","partiesCommitment":"18cd0be7e8d708d2e6ef3e36de5dfef5387406a9ebb4fdda3747ccc8695aefbf","providerPubkey":"5538a1b5e76410a252646236c48e2ed992d53d12f21adf12c498da4025400e10","responseWindowDaa":43200,"scheme":"metered","sessionId":"122994bb40a0ebd3bc80c184ad1cec31","toleranceAbs":1,"unit":"llm.output_tokens.v1","unitPriceSompi":3630,"v":1}
+  digest b636a310363f3574d38646232e60639b6cd533ef7b711129421f14b8f4d54387
 
 ------------------------------------------------------------------------------
 CHUNK 0

@@ -10,6 +10,7 @@
  * useful sense -- an Offer with `babelUnits` of zero is as unusable as one with no tokeniser.
  */
 import { verify } from './encoding.js';
+import { resolveMeter, minimumTolerance } from './meter.js';
 import type { SessionHistory } from './history.js';
 import type { Offer } from './types.js';
 
@@ -30,19 +31,24 @@ function checkBounds(offer: Offer): void {
   if (offer.unitPriceSompi < 1) reject('unitPriceSompi must be >= 1');
   if (offer.babelUnits < 1) reject('babelUnits must be >= 1');
   if (offer.maxBabels < 1) reject('maxBabels must be >= 1');
-  // Named explicitly in §3.1, and load-bearing: Study A measured a one-token divergence between
-  // honest parties, so a zero tolerance halts honest sessions on the first unlucky babel.
-  if (offer.toleranceAbs < 1) reject('toleranceAbs must be >= 1 -- see SPEC.md 0.1');
+  // THE FLOOR COMES FROM THE METER, NOT FROM THE PROTOCOL, and that only became visible when a
+  // second unit was added. A tokeniser is a lossy map from bytes to a count, so two honest parties
+  // can differ by one and a zero tolerance halts them -- Study A measured exactly that. Counting
+  // octets is a direct function of the bytes, so once §5 rule 3 has agreed the digest there is no
+  // honest divergence left to absorb, and a tolerance would be nothing but shaving room.
+  const floor = minimumTolerance(resolveMeter(offer.meter, offer.unit));
+  if (offer.toleranceAbs < floor) {
+    reject(`toleranceAbs must be >= ${floor} for meter ${offer.meter} -- see SPEC.md 6`);
+  }
   if (offer.checkpointEvery < 0) reject('checkpointEvery must be >= 0');
 }
 
 /**
  * Accept an Offer, or throw. Returns the Offer so a caller can use it in an expression.
  *
- * `tokenizer` is checked for presence only. §6.3.4 requires it to name "a specific, publicly
- * obtainable tokeniser and version", and whether a given name resolves is a property of the
+ * `meter` is checked for presence only. Whether a given name RESOLVES is a property of the
  * buyer's environment rather than of the message -- a buyer that cannot obtain it MUST refuse,
- * but that refusal belongs where the tokeniser is loaded, not here.
+ * but that refusal belongs where the meter is loaded (src/meter.ts), not here.
  */
 /** The fields that must simply be what §3.1 says, before any of them are worth interpreting. */
 function checkShape(offer: Offer, expectedNetwork?: string): void {
@@ -52,7 +58,7 @@ function checkShape(offer: Offer, expectedNetwork?: string): void {
     reject(`network is ${offer.network}, expected ${expectedNetwork}`);
   }
   if (!SESSION_ID.test(offer.sessionId)) reject('sessionId must be 16 hex bytes');
-  if (!offer.tokenizer) reject('tokenizer is absent -- an unnamed tokeniser is not usable');
+  if (!offer.meter) reject('meter is absent -- an unnamed meter is not usable');
   if (offer.responseWindowDaa < 1 || offer.responseWindowDaa > MAX_RESPONSE_WINDOW) {
     reject(`responseWindowDaa ${offer.responseWindowDaa} outside 1..=${MAX_RESPONSE_WINDOW}`);
   }

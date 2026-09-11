@@ -126,6 +126,33 @@ def verify_state(state: dict[str, Any], sig_hex: str, pubkey_hex: str) -> bool:
         return False
 
 
+# --------------------------------------------------------------------------- section 6
+
+def octets(content: str) -> int:
+    """
+    `net.bytes_delivered.v1`: octets of the delivered content, UTF-8.
+
+    Section 6.0 calls this an EXACT meter, and the property is worth stating: section 5 rule 3 has
+    already halted on a digest mismatch before any tolerance is consulted, so by the time counting
+    matters both sides hold identical bytes and cannot reach different lengths.
+    """
+    return len(content.encode("utf-8"))
+
+
+#: Section 6. The meters, and whether two correct implementations always agree exactly.
+METERS: dict[str, tuple[str, bool]] = {
+    "o200k_base": ("llm.output_tokens.v1", False),
+    "octets": ("net.bytes_delivered.v1", True),
+}
+
+
+def minimum_tolerance(meter: str) -> int:
+    """Section 6.0: the floor belongs to the meter, not to the protocol."""
+    unit, exact = METERS[meter]
+    del unit
+    return 0 if exact else 1
+
+
 # --------------------------------------------------------------------------- section 5
 
 @dataclass(frozen=True)

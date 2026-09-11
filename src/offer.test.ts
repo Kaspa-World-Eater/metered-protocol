@@ -11,7 +11,7 @@ const SESSION = 'a1'.repeat(16);
 
 const BASE: Offer = {
   v: 1, scheme: 'metered', network: 'kaspa:testnet-10', asset: 'KAS',
-  sessionId: SESSION, unit: 'llm.output_tokens.v1', tokenizer: 'o200k_base',
+  sessionId: SESSION, unit: 'llm.output_tokens.v1', meter: 'o200k_base',
   unitPriceSompi: 3630, babelUnits: 550, maxBabels: 64,
   toleranceAbs: 1, checkpointEvery: 2, responseWindowDaa: 600,
   buyerPubkey: publicKeyHex(BUYER_SK), providerPubkey: publicKeyHex(PROVIDER_SK),
@@ -34,7 +34,7 @@ test('§3.1: toleranceAbs of 0 is rejected -- it would halt honest sessions', ()
 });
 
 test('§3.1: an absent tokenizer is rejected -- an unnamed tokeniser is not usable', () => {
-  assert.throws(() => acceptOffer(offerWith({ tokenizer: '' })), OfferRejected);
+  assert.throws(() => acceptOffer(offerWith({ meter: '' })), OfferRejected);
 });
 
 test('§3.1/§7.3: a responseWindowDaa outside 1..=2^32-1 is rejected', () => {
