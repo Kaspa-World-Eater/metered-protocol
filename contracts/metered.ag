@@ -1,0 +1,135 @@
+// The metered session covenant, in Argent.
+//
+// A port of contracts/metered_session.sil, which is hand-written SilverScript at 520 of 520 bytes
+// with zero spare. Argent compiles to SilverScript, so this does not replace that toolchain --
+// it sits above it. The reason to move is not novelty:
+//
+//   TWO OF THE FIVE FUND-LOSING BUGS FOUND IN THE HAND-WRITTEN VERSION CANNOT BE WRITTEN HERE.
+//
+//   Finding H  a one-output close constrained only outputs[0] and left the rest to fee, so a
+//              provider could burn the buyer's refund. `emits` declares the COMPLETE output
+//              shape, and Argent requires every declared output's value to be disposed of.
+//   Finding J  two covenant inputs could satisfy one payout, destroying the other's balance.
+//              Input-group accounting is what the leader/delegate rules exist for, and
+//              `emits {}` lowers to a consensus-level `OpAuthOutputCount(...) == 0`.
+//
+// WHAT DOES NOT CHANGE. Argent proves the actor, template and successor-state relationships.
+// Application rules stay explicit `require(...)` conditions, so every measured constant below --
+// the 400,000 fee allowance, the 2,000,000 dust floor, the 2,400,000 fold threshold -- is the
+// same number for the same reason, and PHASE3.md still records how each was measured.
+
+state SessionState {
+    // Immutable for the life of the session; carried forward unchanged by every `become`.
+    // In the SilverScript version these were constructor constants outside the state span.
+    // Here they are state, which means the compiler CHECKS that a continuation preserves them
+    // rather than trusting the author to re-emit them correctly.
+    byte[32] parties;
+    byte[16] session_id;
+    int window;
+
+    // The pending claim. SPEC.md 7.4: integers only.
+    int pending_seq;
+    int pending_sompi;
+}
+
+actor MeteredSession owns SessionState {
+    // POST A CLAIM (SPEC.md 7.2 `settle`). Pays nobody: it hands the funds back to this same
+    // actor carrying the agreed State, and restarts the response window. Supersede is the seq
+    // guard, not a separate entry.
+    entry settle(
+        pubkey buyer,
+        pubkey provider,
+        datasig buyer_sig,
+        datasig provider_sig,
+        int seq,
+        int cumulative_units,
+        int cumulative_sompi,
+        byte[32] prev_state
+    ) emits next: MeteredSession {
+        require(blake3(byte[](buyer) + byte[](provider)) == parties);
+
+        // Strictly higher, so a stale State cannot replace a fresher one. pending_seq starts at
+        // -1, so this also implies seq >= 0 on every reachable path.
+        require(seq > pending_seq);
+
+        // cumulative_sompi is load-bearing: it becomes pending_sompi, whose value decides the
+        // close shape, and it is the amount actually paid out. The other two need no lower bound
+        // -- see PHASE3.md 3c for why each omission is argued rather than assumed.
+        require(cumulative_sompi >= 0);
+
+        // SPEC.md 3.4.1: sessionId(16) + seq(8) + cumUnits(8) + cumSompi(8) + prevState(32) = 72.
+        byte[32] digest = blake3(
+            byte[](session_id)
+            + OpNum2Bin(seq, 8)
+            + OpNum2Bin(cumulative_units, 8)
+            + OpNum2Bin(cumulative_sompi, 8)
+            + byte[](prev_state)
+        );
+        require(checkMsgSig(buyer_sig, digest, buyer));
+        require(checkMsgSig(provider_sig, digest, provider));
+
+        SessionState next_state = {
+            parties: parties,
+            session_id: session_id,
+            window: window,
+            pending_seq: seq,
+            pending_sompi: cumulative_sompi,
+        };
+
+        // Written as an addition, never `self.value - fee`: subtraction can underflow, underflow
+        // is undefined, and SilverScript's undefined behaviour is fail-OPEN.
+        require(next.value + 400000 >= self.value);
+        become next <- MeteredSession(next_state);
+    }
+
+    // FINALISE (SPEC.md 7.2 `expire`). No successor: the session ends and the money is paid to
+    // the parties' own keys. `emits {}` is what says so, and lowers to a consensus check that
+    // this input authorises no continuation output at all.
+    entry expire(pubkey buyer, pubkey provider, sig party_sig) emits {} {
+        require(blake3(byte[](buyer) + byte[](provider)) == parties);
+
+        // SPEC.md 7.3: the window is RELATIVE, so ageDaa lowers to OpCheckSequenceVerify and
+        // reads the spending input's sequence field.
+        require(this.ageDaa >= window);
+        require(checkSig(party_sig, buyer) || checkSig(party_sig, provider));
+
+        // SPEC.md 7.2a, Finding J. This covenant accounts for exactly one input -- its own -- and
+        // the payouts below go to plain keys that carry no session identifier, so two sessions
+        // between the same parties would otherwise share one payout and destroy the other's
+        // balance. Measured before the rule existed: 10,400,000 sompi burned.
+        require(tx.inputs.length == 1);
+
+        byte[36] buyer_lock = new ScriptPubKeyP2PK(buyer);
+
+        // DUST (SPEC.md 7.4a). KIP-9 prices an output by its reciprocal, so MEASURED: see tools/dust-map.ts. Whichever side's share is dust, the other
+        // takes the lot: folding costs that party at most 0.02 KAS, and the alternative is
+        // locking the whole balance forever, which is what Finding G actually did.
+        // DUST (SPEC.md 7.4a), measured by tools/dust-map.ts rather than reasoned: the KIP-9
+        // floor is not a constant, and 2,000,000 left an unclosable window at every balance.
+        if (pending_sompi < 2600000) {
+            // The provider earned dust, which includes earning nothing. SPEC.md 7.2: expire
+            // "refunds the buyer entirely if none".
+            require(tx.outputs.length == 1);
+            require(tx.outputs[0].scriptPubKey == byte[](buyer_lock));
+            require(tx.outputs[0].value + 400000 >= self.value);
+        } else {
+            byte[36] provider_lock = new ScriptPubKeyP2PK(provider);
+            require(tx.outputs[0].value == pending_sompi);
+            require(tx.outputs[0].scriptPubKey == byte[](provider_lock));
+            if (tx.outputs.length == 1) {
+                // The buyer's refund is dust, so it goes to fee. The threshold is 2,400,000 and
+                // not 2,000,000 because the refund is self.value - pending_sompi - fee: the
+                // smaller bound would leave 1,600,000..2,000,000 with no legal shape at all.
+                require(pending_sompi + 3000000 >= self.value);
+            } else {
+                require(tx.outputs.length == 2);
+                require(tx.outputs[1].scriptPubKey == byte[](buyer_lock));
+                require(tx.outputs[1].value + pending_sompi + 400000 >= self.value);
+            }
+        }
+    }
+}
+
+app Metered {
+    actor MeteredSession;
+}

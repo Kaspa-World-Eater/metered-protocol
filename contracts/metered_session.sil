@@ -1,0 +1,237 @@
+// The metered session covenant. TESTNET ONLY -- it has never been reviewed by anyone but its
+// author, and four fund-losing bugs have been found in it so far.
+//
+// 520 of Kaspa's 520-byte element limit, both entry points. ZERO SPARE -- the next change of any
+// size needs one of PHASE1.md 2.3's fallbacks. PHASE1.md 2.2 said "plausibly" under the limit;
+// PHASE3.md 3a, 3c, 3g and 3i replace that word with a number and record every pass.
+//
+// PROVEN ON CHAIN, not merely compiled: settle, supersede, a stale claim refused by consensus,
+// the two-output split, and the dust fold all run on testnet-10. 21 simulator cases cover the
+// branches, and `npm run demo` drives the whole lifecycle end to end.
+//
+// FIVE BUGS, and not one of them was something a compiler could have found. Two came from reading
+// the contract against the spec; the fee allowance came from a node refusing to accept a
+// transaction; the dust rule came from a real session earning too little to be paid; and the
+// input-group rule came from reading another language's security invariants and asking whether
+// they applied here.
+//
+// UNDEFINED BEHAVIOUR. SilverScript's UB is fail-OPEN: a contract that completes with UB returns
+// true and the spend succeeds, so UB can never stand in for a rejection. Two consequences are
+// visible throughout: every balance test is written as an ADDITION rather than a subtraction, so
+// no underflow is reachable at all; and where a range check was dropped for size, the reason it
+// was already implied is argued at the site rather than left to be re-derived.
+//
+// TWO PHASES, because supersede requires it. `settle` does not pay anyone: it POSTS a claim,
+// carrying (seq, cumulativeSompi) forward as contract state, and starts the response window. A
+// higher-seq settle replaces it. `expire` pays out once the window has passed. SPEC.md 7.2's
+// settle row reads as though settle itself pays; it cannot, or there would be nothing left to
+// supersede. Recorded as Finding C in PHASE3.md.
+//
+// NATIVE STATE, not a bytecode splice. v1.0.0 has real state fields and validateOutputState; the
+// splice-your-own-bytecode pattern in the pre-1.0 examples is no longer needed. PHASE3.md Finding
+// B claimed otherwise and was wrong -- see the correction recorded there.
+// THE FEE ALLOWANCE, and why it is 400,000.
+//
+// This was 100,000 and no spend of this covenant could ever have been broadcast. Kaspa requires a
+// minimum fee from the transaction's compute mass, and a v1 transaction with one signature check
+// masses 1,666 -- 166,600 sompi -- while the two-output close masses 2,038 and needs 203,800. A
+// covenant that caps the fee below the network's own floor forbids every honest settlement, and
+// it does so silently: the contract compiles, the address derives, the simulator passes every
+// unit test, and the node simply refuses the only transaction that could ever satisfy it.
+//
+// It was found by attempting a real spend on testnet-10, which is the only place it COULD be
+// found. Both numbers were measured today by having a node reject transactions until it stated
+// the requirement itself.
+//
+// IT MUST COVER THE MOST EXPENSIVE ENTRY, not the cheapest, and getting that wrong is how this
+// was wrong TWICE. `expire` evaluates checkSig(buyer) || checkSig(provider) -- two signature
+// checks, 201,686 script units -- so it needs a compute budget of 21 where `settle` needs 10.
+// Mass rises with the budget (budget*100 + 666, plus ~372 for a second output), so a two-output
+// expire masses ~3,138 and the node demands ~313,800 sompi. A 250,000 allowance sized for settle
+// forbids every expire.
+//
+// The cost of being generous: whoever closes may take up to this much as fee, so a spiteful
+// counterparty can burn 400,000 sompi (0.004 KAS). That is the honest price of being able to
+// close at all, and it is bounded, which the alternative was not.
+contract MeteredSession(
+    byte[32] parties,
+    byte[16] sessionId,
+    int window,
+    int initialSeq,
+    int initialSompi,
+) {
+    // Contract state, carried from one spend to the next. SPEC.md 7.4: integers only.
+    // initialSeq is -1 at funding, so the first settle at seq 0 satisfies the strict guard below.
+    int pendingSeq = initialSeq;
+    int pendingSompi = initialSompi;
+
+    // SPEC.md 3.1: partiesCommitment = blake3(buyerPubkey || providerPubkey).
+    function bindParties(pubkey buyer, pubkey provider) {
+        require(blake3(byte[](buyer) + byte[](provider)) == parties);
+    }
+
+    // POST A CLAIM. Verifies a doubly-signed State over the SPEC.md 3.4.1 preimage and carries it
+    // forward as state. Supersede is the seq guard, not a third entry point.
+    entry settle(
+        pubkey buyer,
+        pubkey provider,
+        datasig buyerSig,
+        datasig providerSig,
+        int seq,
+        int cumulativeUnits,
+        int cumulativeSompi,
+        byte[32] prevState,
+    ) {
+        bindParties(buyer, provider);
+
+        // Supersede, as a guard. Strictly higher, so a stale State cannot replace a fresher one.
+        require(seq > pendingSeq);
+
+        // A range check BEFORE the OpNum2Bin calls below, because an out-of-range conversion is
+        // undefined and undefined is fail-open.
+        //
+        // NO UPPER BOUND is checked on anything. UNDEFINED-BEHAVIOUR.md: "an integer used by a
+        // numeric expression must fit in at most eight signed-magnitude bytes" -- so a live
+        // run-time int already has that property and OpNum2Bin(x, 8) on one cannot overflow. An
+        // upper-bound check would be re-checking what the VM guarantees. SPEC.md 2.3's 2^53-1 cap
+        // stays an off-chain rule; nothing on-chain depends on it.
+        //
+        // Of the three lower bounds, only cumulativeSompi survives. The other two are omissions
+        // with proofs:
+        //   seq             -- implied. `seq > pendingSeq` above, and pendingSeq starts at -1 and
+        //                      only ever rises, so seq >= 0 already holds on every reachable path.
+        //   cumulativeUnits -- not load-bearing on-chain. It enters the digest and nothing else;
+        //                      no output value depends on it. A negative value converts fine under
+        //                      signed-magnitude, so it is not a UB risk either, and if both
+        //                      parties signed a nonsensical unit count that is an off-chain
+        //                      reconciliation failure (SPEC.md 5), not something consensus decides.
+        // cumulativeSompi IS load-bearing: it becomes pendingSompi, whose zero value is the
+        // no-claim sentinel in expire, and it is the amount actually paid out.
+        require(cumulativeSompi >= 0);
+
+        // SPEC.md 3.4.1: sessionId(16) + seq(8) + cumUnits(8) + cumSompi(8) + prevState(32) = 72.
+        byte[32] digest = blake3(
+            byte[](sessionId)
+            + OpNum2Bin(seq, 8)
+            + OpNum2Bin(cumulativeUnits, 8)
+            + OpNum2Bin(cumulativeSompi, 8)
+            + byte[](prevState)
+        );
+        require(checkMsgSig(buyerSig, digest, buyer));
+        require(checkMsgSig(providerSig, digest, provider));
+
+        // The claim must hand the funds back to this covenant, less a fee, carrying the new state.
+        // No overflow: the input value is a consensus-supplied UTXO amount bounded by total supply
+        // (~2.87e18 sompi), and the subtraction only shrinks it.
+        // NO BOUNDS CHECK on activeInputIndex, and that is argued rather than assumed.
+        // It NAMES the input being spent, so it is a valid index by construction -- there is no
+        // reachable state in which the input currently executing does not exist. SilverScript's
+        // own TUTORIAL.md writes `tx.inputs[this.activeInputIndex].value` unguarded throughout,
+        // which is the language's authors making the same claim about their own VM.
+        require(tx.outputs.length == 1);
+        require(tx.outputs[0].value + 400000 >= tx.inputs[this.activeInputIndex].value);
+        validateOutputState(0, State { pendingSeq: seq, pendingSompi: cumulativeSompi });
+    }
+
+    // FINALISE. After the response window, pay the pending claim out: cumulativeSompi to the
+    // provider, the remainder to the buyer. SPEC.md 7.3 -- the window is RELATIVE, so ageDaa
+    // lowers to OpCheckSequenceVerify and reads the spending input's sequence field.
+    entry expire(pubkey buyer, pubkey provider, sig partySig) {
+        bindParties(buyer, provider);
+        require(this.ageDaa >= window);
+
+        bool byAParty = checkSig(partySig, buyer) || checkSig(partySig, provider);
+        require(byAParty);
+
+        // THIS COVENANT MUST BE ALONE IN THE TRANSACTION.
+        //
+        // Argent's leader/delegate invariants put it as Rule 3: a covenant has to account for
+        // EVERY input carrying its id. This one accounts for exactly one -- its own -- so without
+        // this line a transaction may spend TWO of them and satisfy both scripts with a single
+        // pair of outputs. `expire` pays to P2PK(buyer) and P2PK(provider), which are NOT
+        // session-specific, so two sessions between the same two parties produce identical output
+        // scripts and each input's checks pass against its own `total`.
+        //
+        // MEASURED before the fix: two inputs of 10,000,000 paying out 9,600,000 was ACCEPTED,
+        // destroying 10,400,000 sompi. Either party can sign it, so it is a griefing attack on
+        // whoever has the larger balance at stake.
+        //
+        // `settle` is not exposed the same way -- its output is the continuation P2SH, which
+        // embeds the sessionId, so two sessions cannot share one -- but this entry pays to plain
+        // keys and has nothing session-specific to bind.
+        require(tx.inputs.length == 1);
+        int total = tx.inputs[this.activeInputIndex].value;
+
+        // No  guard: the branches below demand exactly 1 or exactly 2, so a
+        // zero-output transaction falls into the else and fails there. It was checking what the
+        // structure already guarantees.
+        byte[36] buyerLock = new ScriptPubKeyP2PK(buyer);
+
+        // EVERY BALANCE TEST IS WRITTEN AS AN ADDITION, never `total - x >= y`. Subtraction can
+        // underflow, underflow is undefined, and undefined is fail-OPEN -- a spend that should
+        // have been rejected would succeed. Written this way the comparison is total by
+        // construction, and the guards that would have been needed to make subtraction safe
+        // (pendingSompi >= 0, pendingSompi <= total) are not needed at all. Cheaper AND safer,
+        // which is the rare direction for that trade.
+        //
+        // No overflow either: both terms are consensus-supplied UTXO amounts or a state field
+        // derived from one, so each is bounded by total supply (~2.87e18 sompi) and their sum
+        // stays far below the 8-byte signed-magnitude limit (~9.22e18).
+
+        // DUST, and why this branch exists. KIP-9 prices an output by its reciprocal:
+        // mass = 1e12/out_1 + 1e12/out_2 - 1e12/in, capped at 500,000. For a covenant holding
+        // 0.5 KAS that leaves 499,791 for the first term, so an output below ~2,000,835 sompi
+        // CANNOT BE CREATED AT ALL. Two fund-losing consequences, both closed here:
+        //
+        //   G  a session earning less than that could not be closed by anyone, because the
+        //      two-output path demands outputs[0].value == pendingSompi exactly. The funds
+        //      locked. Found by settling a real session that earned 108,900 sompi.
+        //   H  a one-output close with a claim constrained only outputs[0], leaving the rest to
+        //      fee. A spiteful provider could burn the buyer's whole refund -- Bug 2 again,
+        //      through a door an earlier comment of mine held open by calling that "normal".
+        //
+        // The rule is symmetric: whichever side's share is dust, the OTHER side takes the lot.
+        // Dust cannot be paid to anyone, so folding it costs that party at most 0.02 KAS, and
+        // the alternative is locking the entire balance forever.
+        // The provider is owed a payable amount, or it is not. That single question decides the
+        // whole shape, and asking it first means providerLock is built ONCE -- SilverScript
+        // inlines these at every use site, so a second use costs a second copy of the code.
+        // DUST (SPEC.md 7.4a). MEASURED, not the asymptotic figure it used to be. KIP-9 prices
+        // an output by its reciprocal and subtracts the input's, so what is payable depends on
+        // the OTHER output and on the balance -- 2,000,000 is only the limit a large transaction
+        // approaches. tools/dust-map.ts walks every claim against the node's own formula and
+        // found unclosable windows at every balance, 981 sompi wide at 1 KAS and 600,000 wide at
+        // 0.05 KAS. 2,600,000 closes them for every balance the funding floor admits.
+        if (pendingSompi < 2600000) {
+            // The provider earned dust, which includes earning nothing at all. SPEC.md 7.2:
+            // expire "refunds the buyer entirely if none". One output, all of it to the buyer.
+            require(tx.outputs.length == 1);
+            require(tx.outputs[0].scriptPubKey == byte[](buyerLock));
+            require(tx.outputs[0].value + 400000 >= total);
+        } else {
+            byte[36] providerLock = new ScriptPubKeyP2PK(provider);
+            require(tx.outputs[0].value == pendingSompi);
+            require(tx.outputs[0].scriptPubKey == byte[](providerLock));
+            if (tx.outputs.length == 1) {
+                // The buyer's refund is dust and cannot be created, so it goes to fee. Without
+                // this line the remainder is unconstrained and a provider could burn a refund of
+                // ANY size, which was H.
+                //
+                // THE THRESHOLD IS 2,400,000, NOT 2,000,000, and the difference is the fee. The
+                // refund is total - pendingSompi - fee, so requiring `pendingSompi + 2600000 >=
+                // total` only admits refunds up to 2,000,000 - 400,000 = 1,600,000. A refund
+                // between 1,600,000 and the 2,000,000 dust floor would then have NO legal shape:
+                // too small to pay as its own output, too large to fold. That gap is another way
+                // to lock the balance, and adding the fee allowance closes it exactly.
+                require(pendingSompi + 3000000 >= total);
+            } else {
+                // The ordinary close. The REMAINDER'S VALUE is checked, not only its
+                // destination -- either party may sign this spend, and a destination check alone
+                // lets one pay the other a token amount and burn the rest to fee.
+                require(tx.outputs.length == 2);
+                require(tx.outputs[1].scriptPubKey == byte[](buyerLock));
+                require(tx.outputs[1].value + pendingSompi + 400000 >= total);
+            }
+        }
+    }
+}

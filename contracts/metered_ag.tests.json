@@ -1,0 +1,1226 @@
+{
+  "tests": [
+    {
+      "name": "the first claim: a doubly-signed State at seq 0 posts, and pays nobody",
+      "function": "settle",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        -1,
+        0
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0xec623f8e15d752f04c860ed156d1abd487dcef258a2fd4651742b486291c9b633f6102f0a745b0420f0ac7ffd57e0fa70e61d7db37259b8ed03ff4567748933e",
+        "0xf19690e532182a2d4282d1d1d1ad9cba714029064c727fddd390fe68222d8fa9f192a5d5f188d326c0c9f7a0e547869e43cf6766bf05cb4ac0047bd168480534",
+        0,
+        550,
+        1000000,
+        "0x0000000000000000000000000000000000000000000000000000000000000000"
+      ],
+      "expect": "pass",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              -1,
+              0
+            ],
+            "covenant_id": "0x7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c"
+          }
+        ],
+        "outputs": [
+          {
+            "value": 9600000,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              -1,
+              0
+            ],
+            "state": {
+              "parties": "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "session_id": "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              "window": 10,
+              "pending_seq": 0,
+              "pending_sompi": 1000000
+            },
+            "covenant_id": "0x7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c",
+            "authorizing_input": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "SUPERSEDE: a strictly higher seq replaces the pending claim",
+      "function": "settle",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        0,
+        1000000
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0x2ac700e15c4f25554b12d3ee9aff022349be4b99078850026a7d0387862df6960caff347277358bbe0b69b64445b40c25bff3103d344de164a4c5ba8733bf492",
+        "0x61c8f6f0ccaab82aa2d34752b94383d398e57ae2b77a390bd7ef5dc11c543e93453f63d45d29638a8a8956fea04804e35b2d882fe5788032d2796ed3631fe702",
+        1,
+        1100,
+        2000000,
+        "0x77d47989a2ff919e610e8392e744ede4799485bcc181c55c058ae1d7615d301f"
+      ],
+      "expect": "pass",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              0,
+              1000000
+            ],
+            "covenant_id": "0x7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c"
+          }
+        ],
+        "outputs": [
+          {
+            "value": 9600000,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              0,
+              1000000
+            ],
+            "state": {
+              "parties": "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "session_id": "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              "window": 10,
+              "pending_seq": 1,
+              "pending_sompi": 2000000
+            },
+            "covenant_id": "0x7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c",
+            "authorizing_input": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "P6/B5 THE STALE CLOSE: re-posting the SAME seq over a pending claim is refused",
+      "function": "settle",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        0,
+        1000000
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0x0fe3998e57a2bdb9fb6468d629fb7e47ffb2c727006f2b3219c2410dd57f5c4ec19db0379797c7bec05ccf1eb0ad3de0a2e128655fcde6929b674ee61276de19",
+        "0xa29ccce299457e006e163ccb5429b2c63f981601fb2a578e00ab71827d09008ac8803147ea7b8a27d5f10885690eebb9421952c87afadfb5625d3ad45e90dec5",
+        0,
+        550,
+        1000000,
+        "0x0000000000000000000000000000000000000000000000000000000000000000"
+      ],
+      "expect": "fail",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              0,
+              1000000
+            ],
+            "covenant_id": "0x7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c"
+          }
+        ],
+        "outputs": [
+          {
+            "value": 9600000,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              0,
+              1000000
+            ],
+            "state": {
+              "parties": "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "session_id": "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              "window": 10,
+              "pending_seq": 0,
+              "pending_sompi": 1000000
+            },
+            "covenant_id": "0x7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c",
+            "authorizing_input": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "a LOWER seq than the pending claim is refused -- supersede is strict, not >=",
+      "function": "settle",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        5,
+        9000000
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0x91444b3625644ceb45343e2f38a453304a5c6606f4c4037002f21ca5b9e5c787e886e625d1e95060fbd3c7e9f3fc873e60a952116654903b74b2f534cd80dfdf",
+        "0x5cced378396709615af591d2026697122ec1c14ced608ab2cc15910c9631a238fce1789bfc213d5ea491f87de07cf0a7e7d8c01c413e8b4d69649e5a0d08b722",
+        0,
+        550,
+        1000000,
+        "0x0000000000000000000000000000000000000000000000000000000000000000"
+      ],
+      "expect": "fail",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              5,
+              9000000
+            ],
+            "covenant_id": "0x7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c"
+          }
+        ],
+        "outputs": [
+          {
+            "value": 9600000,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              5,
+              9000000
+            ],
+            "state": {
+              "parties": "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "session_id": "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              "window": 10,
+              "pending_seq": 0,
+              "pending_sompi": 1000000
+            },
+            "covenant_id": "0x7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c",
+            "authorizing_input": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "THE FORGERY: a State signed by a stranger instead of the buyer is refused",
+      "function": "settle",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        -1,
+        0
+      ],
+      "args": [
+        "0x3c72addb4fdf09af94f0c94d7fe92a386a7e70cf8a1d85916386bb2535c7b1b1",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0xe9a9e90ec444dd03c3c106d40b5e290e7784b4833bf0499ab861516b9dade404ef7a6a5ffbbec0349287178006b537b77cf3bb2d5bb83879ef2721c091790b89",
+        "0x5faeb89d9b6e6f558933680712e6c34cb3e1fb1646101fcb76e4d0a539f8f6e4b2de026e5c38b5f04f51e13b445b942ed26072250a9a383221c86a523157d828",
+        0,
+        550,
+        1000000,
+        "0x0000000000000000000000000000000000000000000000000000000000000000"
+      ],
+      "expect": "fail",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              -1,
+              0
+            ],
+            "covenant_id": "0x7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c"
+          }
+        ],
+        "outputs": [
+          {
+            "value": 9600000,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              -1,
+              0
+            ],
+            "state": {
+              "parties": "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "session_id": "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              "window": 10,
+              "pending_seq": 0,
+              "pending_sompi": 1000000
+            },
+            "covenant_id": "0x7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c",
+            "authorizing_input": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "ONE SIGNATURE IS NOT A STATE: the provider signing both halves is refused",
+      "function": "settle",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        -1,
+        0
+      ],
+      "args": [
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0x70322524d4861aa5f71cad73e6d516abed019250015c424e9956a5c6744c97c200b4e1a20a8ac645587d2e9bd88408c7659c8d2977200c6e6c11a2575c2c3d13",
+        "0x9dd257ead5057dc105b8cddeec7a7f532691e8f1088989e1baec3afb324e7b5242809d98edc136cc5586fed1c5c4fbd06434d84ebdbb0e0ae3c5f144d94e60fc",
+        0,
+        550,
+        1000000,
+        "0x0000000000000000000000000000000000000000000000000000000000000000"
+      ],
+      "expect": "fail",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              -1,
+              0
+            ],
+            "covenant_id": "0x7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c"
+          }
+        ],
+        "outputs": [
+          {
+            "value": 9600000,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              -1,
+              0
+            ],
+            "state": {
+              "parties": "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "session_id": "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              "window": 10,
+              "pending_seq": 0,
+              "pending_sompi": 1000000
+            },
+            "covenant_id": "0x7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c",
+            "authorizing_input": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "X1 CROSS-SESSION REPLAY: a State signed for another session is refused",
+      "function": "settle",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xc3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3",
+        10,
+        -1,
+        0
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0xf01e2ae8111efeecd8e588bd1bba5e7b1716fdbdbf8439183d5978fd914f4acd9db08b4a9ffc70dfe4de37f9c9349f349d2aed9efb4266d90f6149d781d27caf",
+        "0x86543ce67885bd03c6b8756b5aaaf89f28e7e362df0648a45f94e1eb5096f4b999973e098d88a3725e260b1b3fe2c58241cff0551e3582f7fedbfcb839f7dc83",
+        0,
+        550,
+        1000000,
+        "0x0000000000000000000000000000000000000000000000000000000000000000"
+      ],
+      "expect": "fail",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xc3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3",
+              10,
+              -1,
+              0
+            ],
+            "covenant_id": "0x7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c"
+          }
+        ],
+        "outputs": [
+          {
+            "value": 9600000,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xc3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3",
+              10,
+              -1,
+              0
+            ],
+            "state": {
+              "parties": "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "session_id": "0xc3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3",
+              "window": 10,
+              "pending_seq": 0,
+              "pending_sompi": 1000000
+            },
+            "covenant_id": "0x7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c",
+            "authorizing_input": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "THE DRAIN: a settle keeping more than the fee instead of returning the funds is refused",
+      "function": "settle",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        -1,
+        0
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0xa50e09d930d7c0f59cdbbe6effd5a1769c540fb54ab463b3c30d4ad2810e240ae5ff82001f2130076c77563f620d27e510d2ea7be22b02e9d1ac00449cbb8596",
+        "0x82e7833479a10a2d0d99cacde38c9f894ab62af9421631cb4e8de78029e6d1adc6dacf55a9c951c5bfb9f0b43d656001b65256bf3b84087333c7a9108323ad11",
+        0,
+        550,
+        1000000,
+        "0x0000000000000000000000000000000000000000000000000000000000000000"
+      ],
+      "expect": "fail",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              -1,
+              0
+            ],
+            "covenant_id": "0x7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c"
+          }
+        ],
+        "outputs": [
+          {
+            "value": 9599999,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              -1,
+              0
+            ],
+            "state": {
+              "parties": "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "session_id": "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              "window": 10,
+              "pending_seq": 0,
+              "pending_sompi": 1000000
+            },
+            "covenant_id": "0x7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c",
+            "authorizing_input": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "THE LIE: a settle whose carried state does not match the State it verified is refused",
+      "function": "settle",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        -1,
+        0
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0x9bdb1b02d32c072d0cf0d9449fa1981f3b1a8f69d811510e580cfc805e7d4f331d9c53a99a9382a32562754e4719448c66999f45b393cf46dfc93c875c75e6dd",
+        "0xb5b6581b98ce90fa468dfd6eb0dc3798e549a9cae883d45a35b9c96fc033f1e1d2c548a711bd990ba352cea6ea7006106b70d33d356b2c18bbc07c61caaca00d",
+        0,
+        550,
+        1000000,
+        "0x0000000000000000000000000000000000000000000000000000000000000000"
+      ],
+      "expect": "fail",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              -1,
+              0
+            ],
+            "covenant_id": "0x7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c"
+          }
+        ],
+        "outputs": [
+          {
+            "value": 9600000,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              -1,
+              0
+            ],
+            "state": {
+              "parties": "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "session_id": "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              "window": 10,
+              "pending_seq": 0,
+              "pending_sompi": 9000000
+            },
+            "covenant_id": "0x7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c",
+            "authorizing_input": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "IDENTITY DRIFT: a continuation that rewrites the session_id it carries is refused",
+      "function": "settle",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        -1,
+        0
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0x137c95f349ce9f7b06d6c7407337cd538790781945664bc25c34def889e6fd1a34e1192cb0eba10040babe875a33fc5c3a85d3200ffab19812c9e7b669afca2d",
+        "0xf759716a79a154f80b587697be72295d1131d2d033907eba8773b9ab2856acf42913ee92fbeb584adf711ff89fad8f2c3f2dbb5d694a62a76d62ca55b2f5f9b5",
+        0,
+        550,
+        1000000,
+        "0x0000000000000000000000000000000000000000000000000000000000000000"
+      ],
+      "expect": "fail",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              -1,
+              0
+            ],
+            "covenant_id": "0x7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c"
+          }
+        ],
+        "outputs": [
+          {
+            "value": 9600000,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              -1,
+              0
+            ],
+            "state": {
+              "parties": "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "session_id": "0xc3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3",
+              "window": 10,
+              "pending_seq": 0,
+              "pending_sompi": 1000000
+            },
+            "covenant_id": "0x7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c",
+            "authorizing_input": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "BUG 1, THE STUCK FUNDS: nobody ever settled, so the buyer takes everything back",
+      "function": "expire",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        -1,
+        0
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0x34b502f9af1e0d7522aaa483f73ed4c926479ae880c56250a9a2ca4ad6df95468f041fb4e55a5efbc67b82a8a22bba5dde9710ba9d0f591e350bfb0e507f0ea301"
+      ],
+      "expect": "pass",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "sequence": 10,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              -1,
+              0
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "value": 9600000,
+            "p2pk_pubkey": "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BUG 1: with no claim, paying the provider instead of refunding the buyer is refused",
+      "function": "expire",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        -1,
+        0
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0x3101b3492c68e20c98e7eb6ea7014661277a4cd1236e303d6cf8de6c1277b5884635cc19a282b2ab8ef5dad6774da78188f1afee3803afeb02595c53a14ae55d01"
+      ],
+      "expect": "fail",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "sequence": 10,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              -1,
+              0
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "value": 9600000,
+            "p2pk_pubkey": "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27"
+          }
+        ]
+      }
+    },
+    {
+      "name": "the normal payout: the provider takes the claim, the buyer takes the remainder",
+      "function": "expire",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        3,
+        4000000
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0x1490af2120b8426f693020d2ceb5096e31335202b187f4dfdb28841e5545d873fbbe049896f7fabafa3d3196f2893fc3155fcd696727229535bcb9c6c45e549601"
+      ],
+      "expect": "pass",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "sequence": 10,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              3,
+              4000000
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "value": 4000000,
+            "p2pk_pubkey": "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27"
+          },
+          {
+            "value": 5600000,
+            "p2pk_pubkey": "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BUG 2, THE BURNED REFUND: paying the buyer a token amount and burning the rest to fee is refused",
+      "function": "expire",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        3,
+        4000000
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0x55192ff85e0b2946f706a971ed7d9dc34b0364fa1a0b05a9f71be2c3d1d6077b0e2fbec8ae271a34154362f31d6a7ee0ff3d6b6b0cc4c16f0c529562160ae98f01"
+      ],
+      "expect": "fail",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "sequence": 10,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              3,
+              4000000
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "value": 4000000,
+            "p2pk_pubkey": "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27"
+          },
+          {
+            "value": 1,
+            "p2pk_pubkey": "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
+          }
+        ]
+      }
+    },
+    {
+      "name": "THE OVERCLAIM: paying the provider more than the pending claim is refused",
+      "function": "expire",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        3,
+        4000000
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0x541c4c528545e1107d637a3de2b84dd822c7b8dcb4297638863a15fa8cd16c77937a0188d2d35fb2e27cb4a0ab2ecdefeab8d845b3a41b6b9d0eae3177839fcd01"
+      ],
+      "expect": "fail",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "sequence": 10,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              3,
+              4000000
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "value": 5000000,
+            "p2pk_pubkey": "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27"
+          },
+          {
+            "value": 4600000,
+            "p2pk_pubkey": "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
+          }
+        ]
+      }
+    },
+    {
+      "name": "THE WRONG DESTINATION: paying the claim to a stranger instead of the provider is refused",
+      "function": "expire",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        3,
+        4000000
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0xa2867fcaa46697a115a51b0558f6713b88873a2c094f61318afd71c05897fb76d644c59c0a38fd8509d8ea67b3c1b714712e5f45d1a0ce3bd0df0a3d591bf6d801"
+      ],
+      "expect": "fail",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "sequence": 10,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              3,
+              4000000
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "value": 4000000,
+            "p2pk_pubkey": "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          {
+            "value": 5600000,
+            "p2pk_pubkey": "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
+          }
+        ]
+      }
+    },
+    {
+      "name": "A STRANGER CANNOT CLOSE: expire signed by neither party is refused",
+      "function": "expire",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        3,
+        4000000
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0xaff4cfa63c2b9c667cb5a9281ff4ed9188818e1dc074038e3f0f4e13fc7dc811fd727db078f6e8b6ff107a7929095e579a6171668241737b9f5cae9af1b3e77701"
+      ],
+      "expect": "fail",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "sequence": 10,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              3,
+              4000000
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "value": 4000000,
+            "p2pk_pubkey": "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27"
+          },
+          {
+            "value": 5600000,
+            "p2pk_pubkey": "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FINDING G: a claim too small to pay closes to the buyer instead of locking forever",
+      "function": "expire",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        3,
+        100000
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0x83d9516b3c8d2722f8fe885da1b23ee78d12048a1133db3506fa024fd69b0808f3e47cd72253a5f135b774ce73c7493883a2d9b43074e899f94ac77a6f0550b501"
+      ],
+      "expect": "pass",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "sequence": 10,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              3,
+              100000
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "value": 9600000,
+            "p2pk_pubkey": "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FINDING G: a dust claim may NOT be paid to the provider -- it cannot be created",
+      "function": "expire",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        3,
+        100000
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0x0f2474aa03d19b5e5317b88b0b05578b627f7f9d8ea5414b1e320bdcb6482cc32746cd0d4653e450f245bbd9fae5af6533b0bb1d3d09d11472a00f56dfb5696801"
+      ],
+      "expect": "fail",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "sequence": 10,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              3,
+              100000
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "value": 100000,
+            "p2pk_pubkey": "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27"
+          },
+          {
+            "value": 9500000,
+            "p2pk_pubkey": "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
+          }
+        ]
+      }
+    },
+    {
+      "name": "THE UNCLOSABLE WINDOW: a claim just above the old dust line folds, it does not strand",
+      "function": "expire",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        3,
+        2100000
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0xa743f315a45913aed51dd76fb4d8e06573bdc919931fef8a19f398f347d222f962a982ffd496b2461c6c619aa0057dcadaac334b40f6d0365aec3bd52305c1df01"
+      ],
+      "expect": "pass",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "sequence": 10,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              3,
+              2100000
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "value": 9600000,
+            "p2pk_pubkey": "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
+          }
+        ]
+      }
+    },
+    {
+      "name": "THE UNCLOSABLE WINDOW: that same claim still may not be paid to the provider",
+      "function": "expire",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        3,
+        2100000
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0xf71bb3ed145495674a1a30f58d93e17c5fa54afdc3a61b42608a58ad26a5b711f62e3d785257779bee71f61f8138956600e5bcf670ee8339c75eb3773bda09af01"
+      ],
+      "expect": "fail",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "sequence": 10,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              3,
+              2100000
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "value": 2100000,
+            "p2pk_pubkey": "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27"
+          },
+          {
+            "value": 7500000,
+            "p2pk_pubkey": "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FINDING H: a one-output close that burns a payable refund to fee is refused",
+      "function": "expire",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        3,
+        4000000
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0x4b54dd0611091e04ce36ac184aaf28009dbcfd3886c900c71de78d5fc7d089b7af5c2f3a67955b0a879066c6eecc4ca665596a8994cbc8b7040f9a890a8c5e7301"
+      ],
+      "expect": "fail",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "sequence": 10,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              3,
+              4000000
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "value": 4000000,
+            "p2pk_pubkey": "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27"
+          }
+        ]
+      }
+    },
+    {
+      "name": "a refund too small to pay folds into the provider, rather than locking the balance",
+      "function": "expire",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        3,
+        9000000
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0xb126ed0039884a9f04bb62447fdc4f86b0aa0773ae648e376750ae37a87e21b7af08a2d571baa4f992737e49349f34e83d82e4436e9e68f233029aebdf5adb3101"
+      ],
+      "expect": "pass",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "sequence": 10,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              3,
+              9000000
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "value": 9000000,
+            "p2pk_pubkey": "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FINDING J: two covenant inputs paying out once is refused -- input-group closure",
+      "function": "expire",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        3,
+        4000000
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0xbe7305459cb3203e24ef59706d9df5180a6b8eb65dd00858d1904659cacec7adb21bdd93c02d846df35e6850a8be5b1bee2c28968a1e61fa4feedc8394be07ea01"
+      ],
+      "expect": "fail",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "sequence": 10,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              3,
+              4000000
+            ]
+          },
+          {
+            "utxo_value": 10000000,
+            "sequence": 10,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              3,
+              4000000
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "value": 4000000,
+            "p2pk_pubkey": "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27"
+          },
+          {
+            "value": 5600000,
+            "p2pk_pubkey": "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
+          }
+        ]
+      }
+    },
+    {
+      "name": "P10/THE EARLY CLOSE: expiring before the response window has passed is refused",
+      "function": "expire",
+      "constructor_args": [
+        "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+        "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        10,
+        3,
+        4000000
+      ],
+      "args": [
+        "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
+        "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
+        "0x5abd2a576eca6fdba90741c7626b1bac5f9858030c41720abbf45d5041c474778296c2b1aaac83f6d972b864007e2b6ede0ace913d8a8df4d32311c29d73d2f701"
+      ],
+      "expect": "fail",
+      "tx": {
+        "active_input_index": 0,
+        "inputs": [
+          {
+            "utxo_value": 10000000,
+            "sequence": 9,
+            "constructor_args": [
+              "0x221a066ade0a7a7a0a89fd975e9a797b23e85d5cdfe053e128f0dc7772166095",
+              "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+              10,
+              3,
+              4000000
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "value": 4000000,
+            "p2pk_pubkey": "0x466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27"
+          },
+          {
+            "value": 5600000,
+            "p2pk_pubkey": "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
+          }
+        ]
+      }
+    }
+  ]
+}

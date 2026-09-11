@@ -1,0 +1,1111 @@
+<title>The Metered Protocol</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+
+<style>
+  /* ---------------------------------------------------------------- tokens
+     Two parties count the same thing. Each gets a hue; agreement is where
+     they meet. Every colour on the page comes from that idea. */
+  :root {
+    --paper:      #EFF1EE;
+    --surface:    #FFFFFF;
+    --surface-2:  #E5E9E6;
+    --ink:        #14181B;
+    --ink-soft:   #4A5459;
+    --ink-faint:  #737F85;
+    --rule:       #D2D8D4;
+
+    --buyer:      #2F5D8C;
+    --buyer-bg:   #E3EBF3;
+    --provider:   #A9541F;
+    --provider-bg:#F5E8DD;
+    --agreed:     #0E6E64;
+    --agreed-bg:  #DDEBE8;
+    --stop:       #9B2C2C;
+
+    --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    --body: "Source Serif 4", Georgia, "Times New Roman", serif;
+    --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+
+    --measure: 66ch;
+    --gap: 1.6rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:      #0F1316;
+      --surface:    #171C20;
+      --surface-2:  #1E252A;
+      --ink:        #E7ECEA;
+      --ink-soft:   #A8B3B8;
+      --ink-faint:  #7B878D;
+      --rule:       #2A3238;
+
+      --buyer:      #79A8D8;
+      --buyer-bg:   #1A2733;
+      --provider:   #E0965F;
+      --provider-bg:#2B1F16;
+      --agreed:     #4CBBAA;
+      --agreed-bg:  #122825;
+      --stop:       #E07070;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper:      #0F1316;
+    --surface:    #171C20;
+    --surface-2:  #1E252A;
+    --ink:        #E7ECEA;
+    --ink-soft:   #A8B3B8;
+    --ink-faint:  #7B878D;
+    --rule:       #2A3238;
+
+    --buyer:      #79A8D8;
+    --buyer-bg:   #1A2733;
+    --provider:   #E0965F;
+    --provider-bg:#2B1F16;
+    --agreed:     #4CBBAA;
+    --agreed-bg:  #122825;
+    --stop:       #E07070;
+  }
+
+  /* ------------------------------------------------------------------ base */
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 78rem;
+    margin: 0 auto;
+    padding: 0 1.5rem 6rem;
+  }
+
+  .col { max-width: var(--measure); }
+
+  h1, h2, h3, .eyebrow, .num, th, .who, .tag, .unit-name {
+    font-family: var(--display);
+  }
+
+  h2 {
+    font-size: clamp(1.5rem, 3.2vw, 2rem);
+    line-height: 1.15;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  p { margin: 0; }
+  a { color: var(--agreed); }
+  strong { font-weight: 600; }
+
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  code, .n {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  code {
+    font-size: 0.875em;
+    background: var(--surface-2);
+    padding: 0.1em 0.36em;
+    border-radius: 3px;
+  }
+
+  section {
+    padding-top: 4.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+  }
+
+  section > .col > * + * { margin-top: 1.1rem; }
+
+  /* ------------------------------------------------------------------ head */
+  header {
+    padding: 4.5rem 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.6rem;
+  }
+
+  .mark {
+    display: flex;
+    align-items: baseline;
+    gap: 0.9rem;
+    font-family: var(--display);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    font-size: clamp(2.6rem, 8vw, 4.5rem);
+    line-height: 1;
+  }
+
+  .mark .dot {
+    width: 0.42em;
+    height: 0.42em;
+    border-radius: 50%;
+    background: var(--agreed);
+    flex: none;
+  }
+
+  .lede {
+    font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+    line-height: 1.45;
+    max-width: 42ch;
+  }
+
+  .thesis {
+    border-left: 3px solid var(--agreed);
+    padding-left: 1.1rem;
+    font-size: 1.15rem;
+    line-height: 1.5;
+    max-width: 48ch;
+  }
+
+  /* ------------------------------------------------------------- two meters */
+  .meters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .meter {
+    background: var(--surface);
+    padding: 1.3rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .meter .who {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .meter.buy .who { color: var(--buyer); }
+  .meter.prov .who { color: var(--provider); }
+
+  .reading {
+    font-family: var(--mono);
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .meter.buy .reading { color: var(--buyer); }
+  .meter.prov .reading { color: var(--provider); }
+
+  .meter .note { font-size: 0.9rem; color: var(--ink-soft); }
+
+  .verdict {
+    grid-column: 1 / -1;
+    background: var(--agreed-bg);
+    padding: 1rem 1.4rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.3rem 0.9rem;
+  }
+
+  .verdict .who { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--agreed); }
+  .verdict .what { font-size: 0.95rem; color: var(--ink-soft); }
+  .verdict .n { color: var(--agreed); font-weight: 600; }
+
+  /* -------------------------------------------------------------- two sides */
+  .sides {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .side {
+    padding: 1.2rem 1.3rem;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .side.buy { background: var(--buyer-bg); border-top: 2px solid var(--buyer); }
+  .side.prov { background: var(--provider-bg); border-top: 2px solid var(--provider); }
+
+  .side .who {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .side.buy .who { color: var(--buyer); }
+  .side.prov .who { color: var(--provider); }
+  .side p { font-size: 0.98rem; line-height: 1.55; }
+
+  /* ------------------------------------------------------------------- unit */
+  .unit {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding: 1.5rem 1.6rem;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--agreed);
+    border-radius: 4px;
+    max-width: var(--measure);
+  }
+
+  .unit-name {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--agreed);
+    line-height: 1;
+  }
+
+  .unit-def { font-size: 1.02rem; }
+  .unit-why { font-size: 0.95rem; color: var(--ink-soft); }
+
+  /* ------------------------------------------------------------------ steps */
+  .steps {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--rule);
+  }
+
+  .step {
+    display: grid;
+    grid-template-columns: 3.2rem 1fr;
+    gap: 1.2rem;
+    padding: 1.15rem 0;
+    border-bottom: 1px solid var(--rule);
+    align-items: start;
+  }
+
+  .num {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+    padding-top: 0.28rem;
+    letter-spacing: 0.06em;
+  }
+
+  .step-body { display: flex; flex-direction: column; gap: 0.35rem; }
+  .step-body p { font-size: 0.98rem; color: var(--ink-soft); max-width: 62ch; }
+
+  .tag {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.16rem 0.44rem;
+    border-radius: 3px;
+    vertical-align: 0.12em;
+    margin-left: 0.5rem;
+  }
+
+  .tag.buy { color: var(--buyer); background: var(--buyer-bg); }
+  .tag.prov { color: var(--provider); background: var(--provider-bg); }
+  .tag.both { color: var(--agreed); background: var(--agreed-bg); }
+
+  /* ------------------------------------------------------------------ table */
+  .tablewrap { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.94rem;
+    min-width: 34rem;
+  }
+
+  th {
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding: 0 1rem 0.6rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  td {
+    padding: 0.85rem 1rem 0.85rem 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+    color: var(--ink-soft);
+  }
+
+  td:first-child { color: var(--ink); }
+  td .n { color: var(--ink); font-weight: 500; white-space: nowrap; }
+
+  /* ------------------------------------------------------------------ misc */
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 1.3rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    max-width: var(--measure);
+  }
+
+  .callout.stop { border-left: 3px solid var(--stop); }
+  .callout.stop h3 { color: var(--stop); }
+
+  .grid2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+    gap: 1rem;
+  }
+
+  .use {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 1.15rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+  }
+
+  .use .who {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-family: var(--display);
+  }
+
+  .use p { font-size: 0.95rem; color: var(--ink-soft); }
+
+  .ledger {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem 1.4rem;
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 1.2rem 1.4rem;
+    overflow-x: auto;
+    max-width: var(--measure);
+  }
+
+  .ledger dt { color: var(--ink-faint); white-space: nowrap; }
+  .ledger dd { margin: 0; color: var(--ink); }
+
+  /* --------------------------------------------------- block-rate comparison */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .cmp {
+    padding: 1.3rem 1.4rem;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    border: 1px solid var(--rule);
+    background: var(--surface);
+  }
+
+  .cmp .who {
+    font-family: var(--display);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .cmp p { font-size: 0.92rem; color: var(--ink-soft); }
+
+  .cmp-figure {
+    font-family: var(--mono);
+    font-size: clamp(2.2rem, 6vw, 3.2rem);
+    font-weight: 600;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .cmp-unit {
+    font-family: var(--display);
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .cmp-slow { border-left: 3px solid var(--provider); }
+  .cmp-slow .cmp-figure { color: var(--provider); }
+
+  .cmp-fast { border-left: 3px solid var(--agreed); }
+  .cmp-fast .cmp-figure { color: var(--agreed); }
+
+  .closer {
+    margin-top: 4.5rem;
+    padding: 2rem 0 0;
+    border-top: 2px solid var(--agreed);
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+  }
+
+  .closer p {
+    font-size: clamp(1.1rem, 2.2vw, 1.3rem);
+    line-height: 1.45;
+    max-width: 52ch;
+  }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.6rem;
+    border-top: 1px solid var(--rule);
+    color: var(--ink-faint);
+    font-size: 0.88rem;
+  }
+
+  @media (max-width: 40rem) {
+    .sides, .meters { grid-template-columns: 1fr; }
+    .step { grid-template-columns: 2.4rem 1fr; gap: 0.8rem; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">A payment protocol for metered work</div>
+    <div class="mark"><span class="dot"></span>metered</div>
+    <p class="lede">
+      A way to pay for AI by the token, in small increments, where neither the buyer
+      nor the seller has to trust the other one.
+    </p>
+    <p class="thesis">
+      The buyer counts the tokens it was actually given &mdash; not the ones it was told about.
+      That single sentence is the whole idea. Everything else is bookkeeping around it.
+    </p>
+  </header>
+
+  <section>
+    <div class="col">
+      <div class="eyebrow">Why this had to exist</div>
+      <h2>You are buying from a pump whose meter only the seller can read</h2>
+      <p>
+        Imagine filling your car at a petrol station where the display faces away from you. The
+        attendant watches the numbers, stops when they like, and tells you what you owe. You have
+        no way to check. You can set a limit beforehand &mdash; &ldquo;no more than forty
+        pounds&rdquo; &mdash; but within that limit, whatever they say is what you pay.
+      </p>
+      <p>
+        That is the current state of buying language-model output. The price depends on how much
+        the model writes, which nobody knows in advance. The seller counts it. The seller reports
+        it. The buyer pays it.
+      </p>
+      <p>
+        For a fifth of a cent, disputing that isn&rsquo;t worth anyone&rsquo;s time &mdash; which
+        is exactly why an inflated number is safe to send. The amounts are too small to argue over
+        and too numerous to audit. <strong>Multiply by a million requests a day and the rounding
+        error becomes the business model.</strong>
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="col">
+      <div class="eyebrow">Why now</div>
+      <h2>Software has started doing the buying</h2>
+      <p>
+        For thirty years, paying tiny amounts online has been impossible for a dull reason: card
+        networks charge a fixed fee per transaction, so anything under a few cents costs more to
+        collect than it is worth. The web went to subscriptions and advertising instead &mdash; not
+        because those were better, but because the payment floor left nothing else.
+      </p>
+      <p>
+        That floor is why we ended up with accounts. To buy from a company you must first register
+        with it, hand over a card, and top up a balance. Fine when you deal with five suppliers.
+        Absurd when the buyer is an AI agent that might call forty different services in the course
+        of one task, most of which it has never used before and will never use again.
+      </p>
+      <p>
+        Public ledgers removed the fee floor. What they didn&rsquo;t remove is the trust problem:
+        cheap settlement lets you pay a stranger a fraction of a cent, but it doesn&rsquo;t tell
+        you whether the stranger delivered what they charged for. <strong>Cheap money without
+        verifiable measurement just means being overcharged faster.</strong>
+      </p>
+      <p>
+        The current standard for machine payments over the web revives an old idea &mdash; the HTTP
+        response &ldquo;402 Payment Required&rdquo;, reserved in 1997 and unused ever since. It
+        works well, and it settles <em>unilaterally</em>: the seller reports what it used, and the
+        only thing checked is that the figure doesn&rsquo;t exceed the cap. That is a reasonable
+        arrangement between parties who already trust each other. Between strangers, it is the
+        petrol pump again.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="col">
+      <div class="eyebrow">The fix</div>
+      <h2>Put a meter on both ends of the hose</h2>
+      <p>
+        Everything below follows from one change: after each delivery, the buyer measures it too,
+        using the same counting method the seller named before any money moved. Both sides sign
+        their own figure.
+      </p>
+    </div>
+
+    <div class="meters">
+      <div class="meter prov">
+        <div class="who">Seller&rsquo;s meter</div>
+        <div class="reading">550</div>
+        <div class="note">What it says it delivered, signed.</div>
+      </div>
+      <div class="meter buy">
+        <div class="who">Buyer&rsquo;s meter</div>
+        <div class="reading">549</div>
+        <div class="note">What it counted arriving, signed.</div>
+      </div>
+      <div class="verdict">
+        <span class="who">Settled</span>
+        <span class="what">Close enough to agree, so the session bills the lower figure:
+          <span class="n">549</span> tokens. Both sign a receipt and continue.</span>
+      </div>
+    </div>
+
+    <div class="col">
+      <p>
+        The seller&rsquo;s number stops being an invoice and becomes a claim, standing next to the
+        buyer&rsquo;s claim. If the two are close, the lower one is billed. If they are not, the
+        session stops and the disputed delivery is never paid for.
+      </p>
+      <p>
+        The second change bounds what any of this can cost. The buyer never authorises a whole
+        session &mdash; only one slice at a time.
+      </p>
+    </div>
+
+    <div class="unit">
+      <div class="unit-name">1 babel</div>
+      <p class="unit-def">
+        <strong>One reserved slice of language.</strong> In the example terms used here, a babel is
+        550 tokens &mdash; roughly two paragraphs, worth about a fifth of a cent. The buyer
+        authorises one babel, receives it, counts it, agrees it, and only then authorises the next.
+      </p>
+      <p class="unit-why">
+        The babel is the exposure bound: it is the most either party can lose if the other one
+        turns dishonest mid-session, and the buyer knows the figure before agreeing to anything.
+        Named the way the <em>bel</em> is &mdash; a unit of a thing that is otherwise hard to
+        measure &mdash; and after the tower, which is where everyone stopped being able to agree
+        on words.
+      </p>
+    </div>
+
+    <div class="col">
+      <p>
+        The idea of reserving a quota rather than billing per unit or per session isn&rsquo;t new.
+        Telephone networks settled on it in the 1990s for exactly this reason: metering every
+        second is too expensive, and trusting the total at the end is too risky. Reserve, spend,
+        reserve again.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="col">
+      <div class="eyebrow">How a session runs</div>
+      <h2>Reserve, receive, count, agree &mdash; then do it again</h2>
+      <p>
+        A session is this loop, repeated. Each pass produces a signed receipt that replaces the one
+        before it.
+      </p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="num">01</div>
+        <div class="step-body">
+          <h3>The seller states its terms<span class="tag prov">seller</span></h3>
+          <p>
+            Price per token, babel size, which counting method it uses, how long the buyer has to
+            respond. The seller signs all of it, so it cannot quietly change later.
+          </p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">02</div>
+        <div class="step-body">
+          <h3>The buyer locks up the money<span class="tag buy">buyer</span></h3>
+          <p>
+            The money for the session goes into a single coin on Kaspa, guarded by a small program
+            rather than by either party. Neither side can take it unilaterally.
+          </p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">03</div>
+        <div class="step-body">
+          <h3>The buyer authorises one babel<span class="tag buy">buyer</span></h3>
+          <p>
+            Never the session. This is the step that bounds the loss.
+          </p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">04</div>
+        <div class="step-body">
+          <h3>The seller delivers, and says what it delivered<span class="tag prov">seller</span></h3>
+          <p>
+            Along with the content comes a fingerprint of the exact bytes sent, and the
+            seller&rsquo;s own token count.
+          </p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">05</div>
+        <div class="step-body">
+          <h3>The buyer counts what actually arrived<span class="tag buy">buyer</span></h3>
+          <p>
+            It checks the fingerprint against the bytes it received &mdash; catching a seller that
+            describes different content than it sent &mdash; then counts the tokens itself.
+          </p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">06</div>
+        <div class="step-body">
+          <h3>The lower of the two counts is billed<span class="tag both">both</span></h3>
+          <p>
+            If the figures are close enough, both sides sign a receipt for the running total. If
+            not, the session stops.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <p>
+        Each receipt carries the running totals and points back at the previous one, so the session
+        forms an unbroken chain. Only the <strong>latest</strong> receipt matters &mdash; it
+        supersedes everything before it. A hundred babels still settle in a single transaction.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="col">
+      <div class="eyebrow">When they disagree</div>
+      <h2>There is no judge, and that is deliberate</h2>
+    </div>
+
+    <div class="callout stop">
+      <h3>The only remedy for disagreement is to stop</h3>
+      <p>
+        If the counts differ by more than the agreed tolerance, the session halts. Everything
+        already agreed settles normally; the disputed babel never becomes a receipt, and nobody
+        pays for it.
+      </p>
+      <p>
+        There is no arbitration, because an arbiter would have to be trusted &mdash; and the point
+        of the design is that nobody is. Halting costs the honest party one babel. That is the
+        price of not needing a judge.
+      </p>
+    </div>
+
+    <div class="col">
+      <p>
+        A small tolerance is necessary rather than sloppy. Two honest parties counting the same
+        text genuinely disagree by one token about once in every 1,250 deliveries, purely from
+        where the boundaries fell. Zero tolerance would halt honest sessions.
+      </p>
+      <p>
+        But a tolerance is also a place to hide. Someone could shade every single babel by one
+        token in their own favour and never trip the limit. So both sides watch the running
+        <em>direction</em> of the disagreements as well as their size: honest noise wanders both
+        ways, while shaving drifts steadily one way. A persistent drift halts the session even
+        though no single delivery ever broke the rule.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="col">
+      <div class="eyebrow">What the network does</div>
+      <h2>A small program holds the money and enforces the ending</h2>
+      <p>
+        Kaspa is not involved during the session. It holds the funds and decides how they may
+        leave. The program guarding them is about 500 bytes and understands two moves.
+      </p>
+    </div>
+
+    <div class="grid2">
+      <div class="use">
+        <div class="who">Move one</div>
+        <h3>Post a receipt</h3>
+        <p>
+          Anyone may publish the latest receipt, provided both parties signed it. It pays nobody
+          yet &mdash; it records the claim and restarts a response window. A newer receipt replaces
+          an older one, so an out-of-date claim can always be overridden by the real one.
+        </p>
+      </div>
+      <div class="use">
+        <div class="who">Move two</div>
+        <h3>Close it out</h3>
+        <p>
+          Once the window passes with no newer receipt, the money is released: the seller gets
+          exactly what the final receipt says it earned, the buyer gets the rest. If no receipt was
+          ever posted, the buyer gets everything back.
+        </p>
+      </div>
+    </div>
+
+    <div class="col">
+      <p>
+        This is what makes a session safe to walk away from. A seller that goes silent cannot
+        strand the buyer&rsquo;s money &mdash; the buyer waits out the window and takes it back. A
+        buyer that vanishes mid-session cannot deny the seller what it already agreed to pay
+        &mdash; the seller posts the last signed receipt and collects. <strong>Neither side needs
+        the other to cooperate at the end</strong>, which is the property that makes trading with
+        strangers reasonable.
+      </p>
+      <p>
+        With one obligation attached, and it falls on the seller. That window is also a
+        <strong>deadline</strong>: it is counted from the moment the money was locked, and each
+        posted receipt restarts it. If it runs out with nothing posted, the buyer takes everything
+        back &mdash; including payment for work already delivered and already agreed. Holding a
+        signed receipt you never posted is holding evidence of a debt the network is about to
+        release.
+      </p>
+      <p>
+        That is a deadline rather than a vigil, and the difference matters. The seller already
+        holds the receipt it needs, an older one can never overwrite a newer one, and a seller is
+        a server &mdash; online because serving is the business. So it posts before the clock runs
+        out, and chooses how much it is willing to let accrue between postings. That figure is the
+        seller&rsquo;s own version of the babel: a number picked in advance rather than a hope.
+      </p>
+      <p>
+        At intervals during the session, a fingerprint of the current receipt is also written to
+        Kaspa as a timestamped record. It costs about <span class="n">0.002 KAS</span>,
+        holds nothing up, and lets either party later prove a given receipt existed by a certain
+        moment.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="col">
+      <div class="eyebrow">Why Kaspa</div>
+      <h2>Two numbers decide whether any of this is usable</h2>
+      <p>
+        The babel is the buyer&rsquo;s exposure, so smaller is better. Two things stop it from
+        being arbitrarily small, and they are not the same constraint.
+      </p>
+      <p>
+        <strong>The first is obvious: the cost of settling.</strong> If closing a session costs a
+        dollar, slices worth a fifth of a cent are absurd. Cheap settlement is table stakes, and
+        plenty of networks have it.
+      </p>
+      <p>
+        <strong>The second is the one that catches people out: how fast blocks are produced.</strong>
+        Remember the ending &mdash; post a receipt, wait a window, then the money is released. That
+        window has to be long enough for the other party to notice a stale receipt and replace it
+        with the real one. And it is counted <em>in blocks</em>, because that is what the timer
+        mechanism understands. It has no concept of minutes.
+      </p>
+      <p>
+        So the same safety margin costs wildly different amounts of real time depending on how fast
+        the network produces blocks:
+      </p>
+    </div>
+
+    <div class="compare">
+      <div class="cmp cmp-slow">
+        <div class="who">A 10-minute block time</div>
+        <div class="cmp-figure">4<span class="cmp-unit">days</span></div>
+        <p>Funds locked, waiting, before either party can walk away with them.</p>
+      </div>
+      <div class="cmp cmp-fast">
+        <div class="who">Kaspa, ~10 blocks per second</div>
+        <div class="cmp-figure">60<span class="cmp-unit">seconds</span></div>
+        <p>The same 600-block window. Measured live: 11.1 blocks per second.</p>
+      </div>
+    </div>
+
+    <div class="col">
+      <p>
+        That is not a tuning difference. Four days of locked capital per session makes the idea a
+        curiosity; sixty seconds makes it something an agent can use forty times in an afternoon.
+        <strong>The block rate is not a detail of the settlement layer &mdash; it sets how long
+        anyone&rsquo;s money is trapped.</strong>
+      </p>
+    </div>
+
+    <div class="col">
+      <div class="eyebrow">The part that isn&rsquo;t a blockchain</div>
+      <h2>You cannot get there by speeding up a chain</h2>
+      <p>
+        In an ordinary blockchain, blocks form a single line. When two miners find a block at the
+        same moment, only one can be in that line &mdash; the other is discarded, along with the
+        work that produced it. The faster blocks come, the more often that collision happens, and
+        the more of the network&rsquo;s security is thrown in the bin.
+      </p>
+      <p>
+        That is why Bitcoin waits ten minutes. It is not caution; it is the cost of insisting the
+        history be a single line.
+      </p>
+      <p>
+        <strong>Kaspa is not a chain. It is a blockDAG.</strong> Blocks may reference several
+        predecessors at once, so blocks found simultaneously are all <em>kept</em> and then put in
+        a consistent order, rather than one surviving and the rest being deleted. Nothing is
+        wasted, so the rate can rise without security falling away.
+      </p>
+      <p>
+        The speed is a property of the shape of the ledger, not a dial someone turned up. That
+        distinction is the whole reason a sixty-second dispute window exists to be used.
+      </p>
+    </div>
+
+    <div class="col">
+      <div class="eyebrow">And three more things, all at once</div>
+      <h2>Fast and cheap still isn&rsquo;t enough</h2>
+    </div>
+
+    <div class="grid2">
+      <div class="use">
+        <div class="who">Requirement</div>
+        <h3>A program that can constrain where money goes</h3>
+        <p>
+          The guarding program must be able to say &ldquo;the seller receives exactly this amount
+          and the buyer receives the rest&rdquo;. Most networks&rsquo; scripts can only say
+          <em>who</em> may spend a coin, not <em>where it must go</em>. Kaspa gained that ability
+          &mdash; a covenant &mdash; and without it the ending cannot be enforced at all.
+        </p>
+      </div>
+      <div class="use">
+        <div class="who">Requirement</div>
+        <h3>Coins, not account balances</h3>
+        <p>
+          A session&rsquo;s funds are a specific coin with a program attached, not a balance in a
+          shared account. A thousand sessions running at once never queue behind each other or
+          contend over the same record. For traffic generated by software rather than people, that
+          is the difference between working and not.
+        </p>
+      </div>
+      <div class="use">
+        <div class="who">Requirement</div>
+        <h3>Nobody to ask permission from</h3>
+        <p>
+          Kaspa is proof of work with no validator set to join, no stake to post and no list to be
+          admitted to. A buyer that is a piece of software does not register with anyone before it
+          starts spending &mdash; which is the point of the exercise.
+        </p>
+      </div>
+      <div class="use">
+        <div class="who">The catch</div>
+        <h3>Each of these exists somewhere</h3>
+        <p>
+          None of the four is unique on its own. What is unusual is having them together: sub-cent
+          settlement, second-scale block times, programs that constrain their outputs, and no
+          gatekeeper. Remove any one and the numbers on this page stop working.
+        </p>
+      </div>
+    </div>
+
+    <dl class="ledger">
+      <dt>1 babel</dt>
+      <dd>550 tokens &mdash; the most either side can lose</dd>
+      <dt>Value of a babel</dt>
+      <dd>~0.02 KAS at the example rate</dd>
+      <dt>Smallest payable share</dt>
+      <dd>0.026 KAS &mdash; below it, a share folds to the other party</dd>
+      <dt>Dispute window</dt>
+      <dd>600 blocks &mdash; about 60 seconds</dd>
+      <dt>Block rate</dt>
+      <dd>11.1 per second, measured live</dd>
+      <dt>Timestamp record</dt>
+      <dd>0.002 KAS, confirmed in ~1.9 s at the 90th percentile</dd>
+      <dt>Guarding program</dt>
+      <dd>504 bytes, of a 520-byte limit</dd>
+      <dt>Receipt</dt>
+      <dd>72 bytes, signed by both parties</dd>
+    </dl>
+  </section>
+
+  <section>
+    <div class="col">
+      <div class="eyebrow">The counting</div>
+      <h2>&ldquo;Count the tokens&rdquo; hides four ways to be wrong</h2>
+      <p>
+        Two-sided measurement only works if two independent implementations, given identical text,
+        return an identical number. That is far easier to get wrong than it sounds, and each rule
+        below exists because the failure was measured rather than imagined.
+      </p>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>What goes wrong</th>
+            <th>How wrong</th>
+            <th>The rule</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Counting each piece of a stream as it arrives, rather than waiting for the whole delivery</td>
+            <td><span class="n">up to 21.5%</span>, always in the seller&rsquo;s favour</td>
+            <td>Reassemble before counting</td>
+          </tr>
+          <tr>
+            <td>Using a different counting method than the one named</td>
+            <td><span class="n">40.9%</span> on Chinese, Japanese and Korean text</td>
+            <td>The method is named up front and must be obtainable by both sides</td>
+          </tr>
+          <tr>
+            <td>Cutting the session into slices at arbitrary points</td>
+            <td>disagreement <span class="n">7.6%</span> of the time</td>
+            <td>Babels tile from the start &mdash; which drops it to 0.08%</td>
+          </tr>
+          <tr>
+            <td>Assuming two honest parties always match exactly</td>
+            <td>off by one token in <span class="n">0.08%</span> of deliveries</td>
+            <td>Tolerance must be at least one token</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="col">
+      <p>
+        There is a fifth, subtler version: the two sides may run the same counting method written
+        in different programming languages. Those can agree on a total while splitting the text
+        differently &mdash; which then diverges on the <em>next</em> piece of text rather than this
+        one. So the implementations are checked against each other boundary by boundary, on
+        deliberately awful input: mixed scripts, emoji, flags, combining marks, pathological
+        whitespace.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="col">
+      <div class="eyebrow">What it is for</div>
+      <h2>Anywhere the amount is discovered during delivery</h2>
+      <p>
+        Nothing here is specific to language models. The pattern fits any trade where the quantity
+        cannot be known in advance, both parties can measure it, and the sums are too small to
+        argue about.
+      </p>
+    </div>
+
+    <div class="grid2">
+      <div class="use">
+        <div class="who">The main one</div>
+        <h3>Agents that buy on their own</h3>
+        <p>
+          An AI agent working through a task may call dozens of services it has no account with and
+          will never call again. It cannot pause for a human to approve each one, and it cannot
+          register with all of them. It needs to pay a stranger a fraction of a cent and verify it
+          got what it paid for.
+        </p>
+      </div>
+      <div class="use">
+        <div class="who">Supply side</div>
+        <h3>Selling a model without becoming a payments company</h3>
+        <p>
+          Someone running a fine-tuned model on their own hardware can charge for it directly
+          &mdash; no card processing, no chargebacks, no minimum spend, no signup for the buyer.
+          The barrier to selling inference drops to the cost of hosting it.
+        </p>
+      </div>
+      <div class="use">
+        <div class="who">Marketplaces</div>
+        <h3>Compute you rent from people you have never met</h3>
+        <p>
+          Distributed inference and rendering networks currently need a trusted operator in the
+          middle to hold funds and adjudicate disputes. Two-sided measurement removes the operator
+          from the money path &mdash; the buyer verifies delivery itself.
+        </p>
+      </div>
+      <div class="use">
+        <div class="who">Beyond tokens</div>
+        <h3>Bandwidth, transcription, translation, rendering</h3>
+        <p>
+          Any service billed by how much was actually delivered has the same shape: an amount
+          neither side knows up front, and a seller whose word is currently the only record. The
+          unit changes; the machinery does not.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="closer">
+    <div class="eyebrow">Why it matters</div>
+    <p>
+      Almost every marketplace exists because two strangers cannot verify each other. The platform
+      holds the money, settles the arguments, and charges both sides for the privilege &mdash; and
+      it has to be trusted by everyone, which is why there are so few of them and why they are so
+      large.
+    </p>
+    <p>
+      <strong>Metering removes the reason for the middle.</strong> When the buyer can measure what
+      it received, and the network enforces the ending whether or not anyone cooperates, a stranger
+      is just a counterparty. Trading with one stops requiring an introduction.
+    </p>
+    <p>
+      That matters most for the buyers who are about to outnumber us. Software agents will make far
+      more purchases than people do, each one too small to invoice, too fast to approve, and too
+      numerous to audit. <strong>They need a way to buy from anyone, check what they got, and walk
+      away &mdash; without asking permission first.</strong>
+    </p>
+  </div>
+
+  <footer>
+    metered &mdash; a two-sided payment scheme for metered work, settled on Kaspa.
+    Every figure on this page is measured rather than estimated.
+  </footer>
+
+</div>

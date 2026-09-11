@@ -1,0 +1,53 @@
+STUDY A -- is the metering unit symmetrically observable?
+tokeniser: o200k_base   corpus: 8 conditions
+==============================================================================
+
+E1  DETERMINISM -- same bytes twice
+    PASS
+
+E2  STREAM REASSEMBLY -- frames split mid-character
+    condition          whole  joined  incremental   verdict
+    prose                 79      79           79   ok
+    unicode_emoji        129     129          129   ok
+    cjk                   66      66           66   ok
+    code                  93      93           93   ok
+    tool_call             87      87           87   ok
+    whitespace            34      34           34   ok
+    repetitive           181     181          181   ok
+    long_mixed          2136    2136         2136   ok
+
+E3  PER-FRAME COUNTING -- the mistake the design forbids
+    condition         correct  per-frame     error
+    prose                  79         95     20.3%
+    unicode_emoji         129        135      4.7%
+    cjk                    66         80     21.2%
+    code                   93        113     21.5%
+    tool_call              87         91      4.6%
+    whitespace             34         35      2.9%
+    repetitive            181        207     14.4%
+    long_mixed           2136       2482     16.2%
+
+E4  PER-CHUNK SUMMATION at 50 tokens/chunk  <-- decides the design
+    condition        provider  buyer sum    error  worst  chunks
+    unicode_emoji         129        129   0.000%      0       3
+    repetitive            181        181   0.000%      0       4
+    long_mixed           2136       2136   0.000%      0      43
+
+E4  PER-CHUNK SUMMATION at 200 tokens/chunk  <-- decides the design
+    condition        provider  buyer sum    error  worst  chunks
+    long_mixed           2136       2136   0.000%      0      11
+
+E4  PER-CHUNK SUMMATION at 550 tokens/chunk  <-- decides the design
+    condition        provider  buyer sum    error  worst  chunks
+    long_mixed           2136       2136   0.000%      0       4
+
+E5  CROSS-TOKENISER -- o200k vs cl100k on identical text
+    condition          o200k   cl100k  difference
+    prose                 79       79        0.0%
+    unicode_emoji        129      144       11.6%
+    cjk                   66       93       40.9%
+    code                  93       95        2.2%
+    tool_call             87       85       -2.3%
+    whitespace            34       34        0.0%
+    repetitive           181      181        0.0%
+    long_mixed          2136     2304        7.9%

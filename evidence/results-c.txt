@@ -1,0 +1,72 @@
+STUDY C -- the honest residual baseline, and can 5.1's detector work
+==============================================================================
+
+1. THE HONEST BASELINE, 10013 chunks over 3 chunk sizes
+     chunks with a non-zero residual : 0  (0.000%)
+     of those, POSITIVE (buyer low)  : 0 / 0
+     mean residual per chunk         : +0.000000 tokens
+     magnitudes seen                 : none
+
+     No divergence at all at these chunk sizes.
+
+1b. RATE AGAINST CHUNK SIZE, at EQUAL chunk counts
+     The comparison only means something if every size gets the same number of chunk
+     BOUNDARIES, because a boundary is where divergence can happen. An earlier version
+     of this section generated equal numbers of TEXTS, which gave size 3 over a hundred
+     times the sample of size 550 and made large chunks look clean when they were only
+     under-observed. Where a count is zero, the 95% upper bound is the rule of three,
+     3/n -- absence of evidence, priced.
+     chunk   chunks   non-zero   rate       95% upper bound
+         3     4000          0   0.0000%   0.0750%
+         5     4000          0   0.0000%   0.0750%
+        11     4000          0   0.0000%   0.0750%
+        23     4000          0   0.0000%   0.0750%
+        50     4000          0   0.0000%   0.0750%
+       200     4000          0   0.0000%   0.0750%
+       550     4000          0   0.0000%   0.0750%
+
+     Divergence is RARE AT EVERY SIZE, of order 1e-4, and this sample cannot
+     resolve a difference between sizes. The honest conclusion is a bound, not a
+     floor: nothing here justifies a minimum babelUnits, and nothing here rules one
+     out either. What it does establish is that the honest rate is small enough that
+     the detector below is not fighting it.
+
+2. WHAT A BUYER STEALS, per SPEC.md 5.1's threat: under-report by 1 token
+     honest drift            : +0.000000 tokens/chunk
+     a buyer cheating 100%   : +1.000000 tokens/chunk
+     a buyer cheating  50%   : +0.500000 tokens/chunk
+     a buyer cheating  25%   : +0.250000 tokens/chunk
+     a buyer cheating  10%   : +0.100000 tokens/chunk
+     The honest drift is zero to measurement, so ANY positive drift is signal.
+     That is the good case for a detector -- and section 3 shows it still is not
+     enough, because a rare cheat is small as well as one-sided.
+
+3. DETECTOR: one-sided CUSUM, k=0.5, h=5  (k above honest drift, below any cheat)
+     FALSE ALARMS on honest sessions : 0 / 400 sessions of 2000 chunks
+
+     detection of a buyer under-reporting 1 token on a fraction of chunks:
+     leak rate   detected   median chunks to alarm   cost to buyer
+        100%     100.0%        9                  0.182% of a 550-token chunk
+         50%     100.0%       80                  0.091% of a 550-token chunk
+         25%       1.0%     1499                  0.045% of a 550-token chunk
+         10%       0.0%        -                  0.018% of a 550-token chunk
+          5%       0.0%        -                  0.009% of a 550-token chunk
+
+4. WHAT THIS MEANS FOR 5.1
+     The detector works, and against the exact threat 5.1 names. A buyer under-
+     reporting one token on EVERY chunk -- the 0.18% leak 5.1 was written to stop --
+     is caught in a median of 9 chunks, with zero false alarms in 800,000 honest ones.
+     'Persistent one-sided residual' becomes CUSUM(k=0.5, h=5), which two implementers
+     can read the same way.
+
+     What it does NOT catch is a patient buyer. At 25% of chunks detection collapses
+     to 1%, and at 10% it never fires. So 5.1's claim that it converts an unbounded
+     leak into a bounded one is TRUE, and the bound is now a number rather than a
+     hope: roughly 0.045% per chunk, an order of magnitude under the threat named,
+     but NOT zero. 5.1 should say so, because a reader currently infers zero.
+
+     Honest drift being zero is why any of this works, and it also corrects Finding D
+     in PHASE3.md: the fear that this detector would halt honest sessions is not
+     supported at realistic chunk sizes. Study A's counter-examples were mostly at
+     chunk=5. What survives of Finding D is that 'persistent' was undefined -- which
+     these numbers now fix.

@@ -1,0 +1,18 @@
+STUDY A -- adversarial search for per-chunk divergence
+==============================================================================
+
+  trials with >=2 chunks : 3634
+  totals that diverged   : 3
+  worst single-chunk delta: 1 token(s)
+
+  COUNTER-EXAMPLES FOUND -- the design assumption is wrong:
+    chunk=5    provider=2192   buyer=2191   delta=-1  text=' \t   \n\t\t\t \t\t  \n\t  \t  \t \n      \n\n\n\t\t\n\n  \t\n\n \n  \n \t  \n\n  \n\t \n '
+    chunk=5    provider=509    buyer=508    delta=-1  text='sbfwfylbnxumbpkkzbnucmvfwywftzdblmr smhufcpvxdrvqndayxxgzmzc'
+    chunk=50   provider=339    buyer=338    delta=-1  text='é👨👦🇯\u200d\u200d\u200d🔒⚡ñ👩ñ👦🎯⚡👧🇯\u200d🇯é🎯👧🎯👧̂🎯🎯🇵⚡🔒👨\u200d\u200d🔒⚡👩é\u200d🇵⚡🇵👦🔒👨👧ñ👦🇵🔒̂🔒🔒👧é̂é👧ñ👩⚡'
+
+  targeted probe -- boundaries inside long repetition runs
+    no divergence
+
+  round-trip property: encode(decode(slice)) == slice
+    arbitrary interior slices re-encoding differently: 227 / 3000
+    ^ note: interior slices are NOT how the protocol cuts. Chunks always start at 0.

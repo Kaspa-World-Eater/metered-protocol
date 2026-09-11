@@ -1,0 +1,36 @@
+{
+  "name": "metered",
+  "version": "1.0.0",
+  "description": "A chunked, two-sided payment scheme for metered work, settled on Kaspa.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --import tsx --test \"src/**/*.test.ts\"",
+    "conformance": "tsx tools/conformance.ts",
+    "conformance:py": "python impl-py/conformance.py",
+    "vectors": "tsx spec/vectors.ts > spec/worked-example.txt",
+    "contracts": "tsx tools/contracts.ts",
+    "contracts:ag": "tsx tools/contracts.ts --profile ag",
+    "state-layout": "tsx tools/state-layout.ts",
+    "dust-map": "tsx tools/dust-map.ts",
+    "fee-check": "tsx tools/fee-check.ts",
+    "anchor": "tsx tools/anchor-cli.ts",
+    "demo": "tsx tools/demo.ts",
+    "live:settle": "tsx tools/live-settle.ts",
+    "live:expire": "tsx tools/live-expire.ts",
+    "live:deadline": "tsx tools/live-deadline.ts"
+  },
+  "dependencies": {
+    "@noble/curves": "^1.9.7",
+    "@noble/hashes": "^1.8.0",
+    "gpt-tokenizer": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
