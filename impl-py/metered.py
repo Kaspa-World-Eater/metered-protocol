@@ -1,18 +1,13 @@
 """
-A SECOND IMPLEMENTATION of the metered protocol, in Python.
+A second implementation of the metered protocol, in Python.
 
-WHY IT EXISTS. SPEC.md's central claim is that two independent implementations can measure the
-same delivered work and agree. Until this file there was one implementation, and a specification
-with one implementation is a description of that implementation.
+Written from spec/SPEC.md and spec/CONFORMANCE.md rather than from src/, and sharing no code with
+it: the two implementations agree on the specification, not on a library. impl-py/conformance.py
+runs it against spec/conformance-vectors.json.
 
-HOW IT WAS WRITTEN, because that is the part that matters: from spec/SPEC.md and
-spec/CONFORMANCE.md, not from src/. Every place the specification turned out to be insufficient to
-write this file is recorded in impl-py/FINDINGS.md rather than resolved by reading the TypeScript.
-Those are the real output of this exercise. The code passing is the easy half.
-
-It implements the part a conformance suite can check -- encoding, digests, the settlement
-preimage, signature verification, reconciliation and the settlement arithmetic. It is not a
-working client: there is no transport here, no covenant, and no key management.
+It covers what a conformance suite can check -- encoding, digests, the settlement preimage,
+signature verification, reconciliation and the settlement arithmetic. It is not a working client:
+there is no transport here, no covenant, and no key management.
 """
 
 from __future__ import annotations

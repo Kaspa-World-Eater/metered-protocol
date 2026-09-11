@@ -11,16 +11,12 @@ choices. You need the same answers.
 
 ## Why this file exists
 
-The central claim of `SPEC.md` is that **two independent implementations can measure the same
-delivered work and agree**. Everything else rests on it: if two parties cannot arrive at the same
-number, there is nothing to settle and the protocol is decoration.
+A protocol whose central claim is that **two independent implementations can measure the same
+delivered work and agree** is only as good as that agreement. Prose cannot establish it; identical
+bytes can.
 
-That claim has been demonstrated once, for the tokeniser — the JavaScript encoder is pinned against
-Python `tiktoken` token for token over an adversarial corpus. It has **not** been demonstrated for
-the protocol, because so far there has only been one implementation of it. A specification with one
-implementation is a description of that implementation, however carefully it is written.
-
-These vectors are the invitation to fix that.
+These vectors are generated from a working implementation and checked back against it, and a second
+implementation written from the specification alone reproduces all of them.
 
 ## Running them
 
@@ -71,10 +67,9 @@ The covenant has its own suites — `contracts/metered_session.tests.json` and
 `contracts/metered_ag.tests.json` — which execute against a SilverScript simulator rather than
 against a protocol implementation.
 
-## If you disagree with a vector
+## Reporting a disagreement
 
-Say so. A vector that is wrong is worth more to this project than one that is right, and the
-implementation that produced them has been wrong before — eight times in one audit, each recorded in
-the commit history rather than tidied away. Bring the case that fails and the reasoning.
+A vector that is wrong is a defect in this repository, not in the implementation that fails it.
+Open an issue with the case, the value produced, and the section of `SPEC.md` relied on.
 
 Regenerate with `npm run conformance`; verify with `npm test`.

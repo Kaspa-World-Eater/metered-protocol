@@ -6,7 +6,7 @@
  * agreed state -- with real blake3 digests and real BIP340 signatures, so the document ships a
  * golden vector an implementer can check against rather than an illustration.
  *
- * Self-contained: uses this project's own encoder, so CI can regenerate and verify it.
+ * Self-contained: uses the reference encoder, so it can be regenerated and compared.
  *   npm run vectors
  */
 import { canonicalize, digestHex, blake3Hex, signEnvelope, verify, signState, verifyState, publicKeyHex } from '../src/encoding.js';

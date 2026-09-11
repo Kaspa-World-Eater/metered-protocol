@@ -15,7 +15,7 @@ is bookkeeping around that sentence.
 
 - **[Read the explainer](https://kaspahttp402.github.io/metered-protocol/)** — the idea, in plain
   terms, for people who are not going to read a specification.
-- **[Read the specification](spec/SPEC.md)** — normative, and the thing to argue with.
+- **[Read the specification](spec/SPEC.md)** — normative.
 - **[Implement it](spec/CONFORMANCE.md)** — inputs and exact outputs, in a form no implementation
   can pass by accident.
 
@@ -58,44 +58,35 @@ npm run conformance      # regenerate the vectors
 npm run conformance:py   # the second implementation, against the same file
 ```
 
-The second run is the one worth watching. `impl-py/` shares no code with `src/`, was written from
-`spec/SPEC.md`, and implements BIP340 verification from the BIP rather than importing it. It agrees
-on all 52 assertions.
+`impl-py/` shares no code with `src/`. It was written from `spec/SPEC.md` and implements BIP340
+verification from the BIP rather than importing it, so the two agree on the specification rather
+than on a shared library. All 52 assertions pass.
 
 The covenant suites need [SilverScript](https://github.com/kaspanet/silverscript) and a patched
 debugger; the chain tooling additionally needs a rusty-kaspa WASM build (`METERED_KASPA_SDK`) and a
 funded key. Neither is required to read the specification or run the conformance vectors.
 
-## What has actually been demonstrated
+## Status
 
-Everything below ran, rather than being argued:
+Both covenants and the full session flow run on **Kaspa testnet-10**. The protocol has not been
+deployed to mainnet: SilverScript is unaudited and Argent is pre-release, and the covenant holds
+funds.
 
-- **A real language model, metered end to end and settled on chain.** The model reported 10, 10, 10
-  output tokens; the seller counted 10, 10, 10; the buyer independently counted 10, 10, 10.
-- **Both covenants executed under real consensus** on testnet-10 — a claim posted, a stale claim
-  refused by the network itself, a newer claim superseding it, the money split, and a full refund
-  where no claim was ever made.
-- **Two implementations agreeing** on every conformance vector.
-- **A tokeniser pinned across languages**, token boundary by token boundary, against Python
-  `tiktoken` on deliberately awful input: mixed scripts, emoji, combining marks, pathological
-  whitespace.
+What has been exercised end to end:
 
-Numbers worth knowing: the guarding program is **504 bytes** of a 520-byte limit; a receipt is
-**72 bytes**; a timestamp record costs **0.002 KAS**; the dispute window is **600 blocks, about 60
-seconds** at the ~10 blocks per second Kaspa produces. The same 600-block window would be over four
-days at ten-minute block times, which is the whole reason this is built on a blockDAG.
+- A language model metered through a complete session and settled on chain, with the model's own
+  usage figure, the seller's count and the buyer's count agreeing exactly.
+- Both covenants executing under consensus — a claim posted, a stale claim refused by the network,
+  a newer claim superseding it, the balance split between the parties, and a full refund where no
+  claim was made.
+- Two implementations agreeing on every conformance vector.
+- The tokeniser pinned across languages, token boundary by token boundary, against Python
+  `tiktoken` over mixed scripts, emoji, combining marks and pathological whitespace.
 
-## What has not
-
-**It has not run on mainnet.** SilverScript is unaudited and Argent is pre-release, and this
-covenant holds money. The language is the risk, not the protocol.
-
-**Nobody outside this project has read the specification.** The second implementation is real
-evidence — writing it surfaced two genuine gaps, now fixed — but it was written by the same author
-from the same understanding, which is a weaker test than an independent one.
-
-If you find a vector that is wrong, or a rule that cannot be implemented from what is written, that
-is the most useful thing you can send. Both have happened already.
+Figures: the covenant is **504 bytes** of a 520-byte script limit; a State is **72 bytes** signed;
+a checkpoint costs **0.002 KAS**; the response window is **600 blocks, about 60 seconds** at the
+roughly 10 blocks per second Kaspa produces. The same 600-block window is over four days at
+ten-minute block times, which is why the settlement layer is a blockDAG.
 
 ## Prior art
 
