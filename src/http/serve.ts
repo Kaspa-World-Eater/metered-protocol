@@ -16,7 +16,7 @@ import { digestHex, verifyState } from '../encoding.js';
 import { SessionRejected } from './provider.js';
 import { ReservationUnauthenticated } from '../reservation.js';
 import { MeteredService } from './service.js';
-import { toPaymentRequired, errorBody, type ChunkRequest, type StateRequest } from './protocol.js';
+import { toPaymentRequired, errorBody, toBase64, type ChunkRequest, type StateRequest } from './protocol.js';
 
 type Reply = (code: number, body: unknown) => void;
 
@@ -96,9 +96,9 @@ async function handleBabel(svc: MeteredService, req: IncomingMessage, reply: Rep
   const session = id ? svc.get(id) : undefined;
   if (!session || !id) return reply(404, errorBody(...NO_SESSION));
   try {
-    const delivered = session.chunk(body.reservation, body.prompt);
+    const { content, measurement } = session.chunk(body.reservation, body.prompt);
     svc.persist(id);
-    return reply(200, delivered);
+    return reply(200, { contentB64: toBase64(content), measurement });
   } catch (err) {
     if (isUnauthenticated(err)) return reply(403, errorBody('rejected', String(err)));
     svc.halt(id);

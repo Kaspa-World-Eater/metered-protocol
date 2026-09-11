@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { utf8 } from '../encoding.js';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -23,8 +24,8 @@ const PROVIDER_SK = '22'.repeat(32);
 const BUYER_SK = '11'.repeat(32);
 const dir = mkdtempSync(join(tmpdir(), 'metered-restart-'));
 const meter = meterFor('o200k_base');
-const deliver = (prompt: string, max: number) =>
-  Array.from({ length: max }, (_, i) => `${prompt}${i}`).join(' ');
+const deliver = (prompt: string, max: number): Uint8Array =>
+  utf8(Array.from({ length: max }, (_, i) => `${prompt}${i}`).join(' '));
 
 const TERMS: OfferTerms = {
   v: 1, scheme: 'metered', network: 'kaspa:testnet-10', asset: 'KAS',

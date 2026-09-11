@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "description": "A chunked, two-sided payment scheme for metered work, settled on Kaspa.",
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./chain": "./tools/chain.ts"
+  },
+  "types": "./src/index.ts",
   "license": "MIT",
   "engines": {
     "node": ">=20"
@@ -21,7 +26,8 @@
     "demo": "tsx tools/demo.ts",
     "live:settle": "tsx tools/live-settle.ts",
     "live:expire": "tsx tools/live-expire.ts",
-    "live:deadline": "tsx tools/live-deadline.ts"
+    "live:deadline": "tsx tools/live-deadline.ts",
+    "sigscript": "tsx tools/sigscript-check.ts"
   },
   "dependencies": {
     "@noble/curves": "^1.9.7",

@@ -34,8 +34,6 @@ type Any = any;
 
 const FUNDED = 50_000_000n;
 
-/** The bytes an `expire` spend actually carries: arguments, dispatch tag, and the redeem script. */
-const EXPIRE_SIGSCRIPT_BYTES = 660;
 /**
  * Build the REAL close transaction, with the real redeem script and a real signature.
  *

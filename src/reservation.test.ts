@@ -1,8 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { publicKeyHex, signEnvelope, blake3Hex } from './encoding.js';
-import { acceptOffer, OfferRejected } from './offer.js';
-import { memoryHistory } from './history.js';
 import { acceptReservation, ReservationRejected, priceOf, requiredFunding, CLOSE_FEE_SOMPI } from './reservation.js';
 import { Checkpointer, isCheckpointBabel } from './checkpoint.js';
 import type { BabelCursor } from './reservation.js';

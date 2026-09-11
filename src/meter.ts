@@ -34,8 +34,9 @@ export interface Meter {
   name: string;
   /** The unit this meter measures. An Offer naming a different unit is refused. */
   unit: string;
-  /** Content in, units out. */
-  count(content: string): number;
+  /** Content in, units out. BYTES in: a meter measures what was delivered, and what is
+   * delivered is bytes. A meter for a text unit decodes them itself. */
+  count(content: Uint8Array): number;
   /**
    * Whether two correct implementations ALWAYS reach the same number for the same bytes.
    * `true` permits `toleranceAbs` of 0; `false` requires at least 1.
@@ -50,7 +51,11 @@ export interface Meter {
 const o200k: Meter = {
   name: 'o200k_base',
   unit: 'llm.output_tokens.v1',
-  count: (content) => encodeO200k(content).length,
+  // A tokeniser measures TEXT, so this meter decodes first -- which is the honest statement of
+  // what it is: a text meter, usable only on content that is text. The decode is deliberately
+  // non-fatal, because a tokeniser's job is to count what it was given rather than to validate
+  // it, and a halt on malformed input belongs to the digest check in SPEC.md 5 rule 3.
+  count: (content) => encodeO200k(new TextDecoder().decode(content)).length,
   exact: false,
 };
 
@@ -64,7 +69,9 @@ const o200k: Meter = {
 const octets: Meter = {
   name: 'octets',
   unit: 'net.bytes_delivered.v1',
-  count: (content) => new TextEncoder().encode(content).length,
+  // Now that delivery is bytes, this is the whole meter. It used to encode a string to UTF-8
+  // first, which measured text correctly and could not measure a file at all.
+  count: (content) => content.length,
   exact: true,
 };
 
@@ -103,9 +110,9 @@ export function resolveMeter(name: string, unit?: string): Meter {
 export const minimumTolerance = (meter: Meter): number => (meter.exact ? 0 : 1);
 
 /** A counting function for the named meter, for callers that want only the number. */
-export function meterFor(name: string, unit?: string): (content: string) => number {
+export function meterFor(name: string, unit?: string): (content: Uint8Array) => number {
   const meter = resolveMeter(name, unit);
-  return (content: string) => meter.count(content);
+  return (content: Uint8Array) => meter.count(content);
 }
 
 /** Token ids, for the conformance comparison that pins boundaries rather than totals. */

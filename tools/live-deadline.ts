@@ -39,8 +39,8 @@ const BABEL = 10;
 
 const dir = mkdtempSync(join(tmpdir(), 'metered-deadline-'));
 const meter = meterFor('o200k_base');
-const deliver = (prompt: string, max: number) =>
-  Array.from({ length: max }, (_, i) => `${prompt}${i}`).join(' ');
+const deliver = (prompt: string, max: number): Uint8Array =>
+  new TextEncoder().encode(Array.from({ length: max }, (_, i) => `${prompt}${i}`).join(' '));
 
 /** What the provider's policy WOULD have told it, had it been asked. */
 const POLICY: ExposurePolicy = { settleByAgeDaa: 1, settleAtUnsettledSompi: 50_000 };

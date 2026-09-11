@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { utf8 } from '../encoding.js';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -26,8 +27,8 @@ const dir = mkdtempSync(join(tmpdir(), 'metered-oblig-'));
 const path = () => join(dir, `s-${Math.random().toString(36).slice(2)}.jsonl`);
 
 const meter = meterFor('o200k_base');
-const deliver = (prompt: string, maxUnits: number) =>
-  Array.from({ length: maxUnits }, (_, i) => `${prompt}${i}`).join(' ');
+const deliver = (prompt: string, maxUnits: number): Uint8Array =>
+  utf8(Array.from({ length: maxUnits }, (_, i) => `${prompt}${i}`).join(' '));
 
 const SESSION = 'a1'.repeat(16);
 const OFFER = signEnvelope(
@@ -54,7 +55,7 @@ const reserve = (seq: number): Reservation =>
   ) as Reservation;
 
 /** Run one chunk and hand back the buyer's Measurement, which is what `settle` consumes. */
-function buyerMeasurement(content: string, seq: number, units: number, cumulative: number): Measurement {
+function buyerMeasurement(content: Uint8Array, seq: number, units: number, cumulative: number): Measurement {
   return signEnvelope(
     {
       v: 1, sessionId: SESSION, seq, by: 'buyer', units, cumulativeUnits: cumulative,

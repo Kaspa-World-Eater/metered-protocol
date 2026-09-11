@@ -19,10 +19,20 @@ import { newBiasState, observeResidual, biasAlarm, type BiasState } from '../bia
 import type { Halt, Measurement, Offer, Reservation, State } from '../types.js';
 
 /** Counts the units in delivered content. Injected, because SPEC.md 6 makes it the Offer's choice. */
-export type Meter = (content: string) => number;
+export type Meter = (content: Uint8Array) => number;
 
-/** Produces the content for a chunk. This is the thing actually being sold. */
-export type Deliver = (prompt: string, maxUnits: number) => string;
+/**
+ * Produces the content for a chunk. This is the thing actually being sold.
+ *
+ * BYTES, NOT TEXT. Everything the protocol does to delivered content -- digest it, count it,
+ * agree on it -- is defined over bytes, and this signature used to say `string`, which quietly
+ * restricted the whole scheme to things expressible as text. A file is not, so a unit called
+ * `net.bytes_delivered.v1` could be declared and never actually served.
+ */
+export type Deliver = (prompt: string, maxUnits: number) => Uint8Array;
+
+/** The stand-in for content a restored session deliberately no longer holds. */
+const EMPTY = new Uint8Array(0);
 
 export class SessionRejected extends Error {
   constructor(readonly halt?: Halt) {
@@ -32,7 +42,7 @@ export class SessionRejected extends Error {
 
 interface Pending {
   seq: number;
-  content: string;
+  content: Uint8Array;
   units: number;
   contentDigest: string;
 }
@@ -85,7 +95,7 @@ export class ProviderSession {
 
   /** State that must outlive the process. See SessionSnapshot. */
   snapshot(): SessionSnapshot {
-    const { content, ...pending } = this.pending ?? { content: '', seq: -1, units: 0, contentDigest: '' };
+    const { content, ...pending } = this.pending ?? { content: EMPTY, seq: -1, units: 0, contentDigest: '' };
     void content;
     return {
       offer: this.offer,
@@ -110,7 +120,7 @@ export class ProviderSession {
     session.cursor = snap.cursor;
     session.lastStateDigest = snap.lastStateDigest;
     session.bias = snap.bias;
-    session.pending = snap.pending ? { ...snap.pending, content: '' } : null;
+    session.pending = snap.pending ? { ...snap.pending, content: EMPTY } : null;
     for (const [id, result] of snap.settled) session.settled.set(id, result);
     return session;
   }
@@ -126,7 +136,7 @@ export class ProviderSession {
    * that does not advance by exactly one, or totals that do not recompute all mean the buyer has
    * not authorised what it is asking for, and delivering first would be giving work away.
    */
-  chunk(reservation: Reservation, prompt: string): { content: string; measurement: Measurement } {
+  chunk(reservation: Reservation, prompt: string): { content: Uint8Array; measurement: Measurement } {
     acceptReservation(this.offer, reservation, this.cursor);
 
     const content = this.deliver(prompt, reservation.units);

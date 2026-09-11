@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { utf8 } from './encoding.js';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
@@ -122,7 +123,7 @@ for (const c of group('6').cases.filter((x) => x.name.startsWith('octets of'))) 
   test(`§6 ${c.name}`, () => {
     const given = c.given as unknown as { meter: string; content: string };
     const expect = c.expect as unknown as { units: number; contentDigest: string };
-    assert.equal(meterFor(given.meter)(given.content), expect.units);
+    assert.equal(meterFor(given.meter)(utf8(given.content)), expect.units);
     assert.equal(blake3Hex(given.content), expect.contentDigest);
   });
 }

@@ -74,7 +74,7 @@ export async function complete(
  * replies are handed out in order. A real provider would make `Deliver` async; the demo keeps the
  * protocol's own shape unchanged rather than reworking it to accommodate one adapter.
  */
-export function prefetched(replies: ModelReply[]): (prompt: string, maxUnits: number) => string {
+export function prefetched(replies: ModelReply[]): (prompt: string, maxUnits: number) => Uint8Array {
   let i = 0;
   return (prompt: string, maxUnits: number) => {
     void prompt;
@@ -82,7 +82,7 @@ export function prefetched(replies: ModelReply[]): (prompt: string, maxUnits: nu
     const reply = replies[i];
     i += 1;
     if (!reply) throw new Error('the demo asked for more babels than were prefetched');
-    return reply.content;
+    return new TextEncoder().encode(reply.content);
   };
 }
 
@@ -94,7 +94,7 @@ const DEMO_PROMPTS = [
 ];
 
 export interface ModelSource {
-  deliver: (prompt: string, maxUnits: number) => string;
+  deliver: (prompt: string, maxUnits: number) => Uint8Array;
   reportedTokens: number[];
   model: string;
 }

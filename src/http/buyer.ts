@@ -12,7 +12,7 @@ import { blake3Hex, digestHex, signEnvelope, verify, verifyState } from '../enco
 import { signStateWithObligations, memoryStore, type SignerStore } from '../signer.js';
 import { acceptOffer } from '../offer.js';
 import { memoryHistory, type SessionHistory } from '../history.js';
-import { priceOf, requiredFunding, CLOSE_FEE_SOMPI } from '../reservation.js';
+import { priceOf, CLOSE_FEE_SOMPI } from '../reservation.js';
 import { newBiasState, observeResidual, biasAlarm, type BiasState } from '../bias.js';
 import { toleranceBound } from '../reconcile.js';
 import type { Measurement, Offer, Reservation, State } from '../types.js';
@@ -76,7 +76,7 @@ export class BuyerSession {
    * not adopted -- that is the point. A mismatched digest means the two sides are describing
    * different bytes, and no amount of counting can reconcile that (SPEC.md 5 rule 3).
    */
-  measure(content: string, providerMeasurement: Measurement, seq: number): Measurement {
+  measure(content: Uint8Array, providerMeasurement: Measurement, seq: number): Measurement {
     if (!verify(providerMeasurement, this.offer.providerPubkey)) {
       throw new BuyerRefused('the provider Measurement does not verify');
     }

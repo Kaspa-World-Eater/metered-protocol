@@ -43,9 +43,33 @@ function canonicalizeObject(value: Record<string, unknown>): string {
 }
 
 /** BLAKE3-256 of raw bytes or a UTF-8 string, hex. */
+/**
+ * Text as the bytes that represent it.
+ *
+ * Delivered content is bytes (SPEC.md 6), so anything that starts life as a string has to become
+ * bytes at some boundary. This is that boundary, named once, so no caller invents its own.
+ */
+export const utf8 = (text: string): Uint8Array => utf8ToBytes(text);
+
 export function blake3Hex(input: Uint8Array | string): string {
   const bytes = typeof input === 'string' ? utf8ToBytes(input) : input;
   return bytesToHex(blake3(bytes, { dkLen: 32 }));
+}
+
+/**
+ * SPEC.md 3.1's `partiesCommitment`: blake3 over the two public keys, as BYTES.
+ *
+ * THE ONE DEFINITION, because there were two and they disagreed. "blake3(buyerPubkey || providerPubkey)"
+ * never said whether the concatenation joins the 64 raw key bytes or the 128 characters of hex
+ * that represent them, and those produce different digests. The live provider hashed the bytes;
+ * the conformance generator hashed the hex text. Both were correct for as long as nothing
+ * compared them -- and consensus settles the argument, because the covenant recomputes
+ * blake3(byte[](buyer) + byte[](provider)) and will not pay out against anything else.
+ *
+ * So the bytes reading is normative, and this is the only place it is computed.
+ */
+export function partiesCommitment(buyerPubkey: string, providerPubkey: string): string {
+  return blake3Hex(new Uint8Array([...hexToBytes(buyerPubkey), ...hexToBytes(providerPubkey)]));
 }
 
 /** BLAKE3-256 of the canonical form of a value, hex. The only digest this protocol uses. */

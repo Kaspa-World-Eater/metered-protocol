@@ -22,6 +22,7 @@ import { blake3 } from '@noble/hashes/blake3';
 import { bytesToHex } from '@noble/hashes/utils';
 import { signState, settlementPreimage } from '../src/encoding.js';
 import { buildExpireCases } from './expire-cases.js';
+import { settleArgs } from './sigscript.js';
 import { profileFromArgv, COVENANT_ID } from './covenant-profile.js';
 import {
   BUYER_SK, PROVIDER_SK, STRANGER_SK, BUYER_PK, PROVIDER_PK, STRANGER_PK,
@@ -43,12 +44,8 @@ const bindInput = () => (PROFILE.binds ? { covenant_id: COVENANT_ID } : {});
 const bindOutput = () => (PROFILE.binds ? { covenant_id: COVENANT_ID, authorizing_input: 0 } : {});
 
 /** The arguments `settle` takes, signed by whichever keys the case calls for. */
-function settleArgs(s: State, buyerSk = BUYER_SK, providerSk = PROVIDER_SK, buyerPk = BUYER_PK, providerPk = PROVIDER_PK) {
-  return [
-    x(buyerPk), x(providerPk),
-    x(signState(s, buyerSk)), x(signState(s, providerSk)),
-    s.seq, s.cumulativeUnits, s.cumulativeSompi, x(s.prevState ?? '00'.repeat(32)),
-  ];
+function signedSettleArgs(s: State, buyerSk = BUYER_SK, providerSk = PROVIDER_SK, buyerPk = BUYER_PK, providerPk = PROVIDER_PK) {
+  return settleArgs(s, buyerPk, providerPk, signState(s, buyerSk), signState(s, providerSk));
 }
 
 /** A settle spends the covenant and hands it straight back, carrying the new claim. */
@@ -77,7 +74,7 @@ const settleCases: Case[] = [
     name: 'the first claim: a doubly-signed State at seq 0 posts, and pays nobody',
     function: 'settle',
     constructor_args: ctor(-1, 0),
-    args: settleArgs(FIRST),
+    args: signedSettleArgs(FIRST),
     expect: 'pass',
     tx: settleTx(-1, 0, FIRST),
   },
@@ -85,7 +82,7 @@ const settleCases: Case[] = [
     name: 'SUPERSEDE: a strictly higher seq replaces the pending claim',
     function: 'settle',
     constructor_args: ctor(0, 1_000_000),
-    args: settleArgs(SECOND),
+    args: signedSettleArgs(SECOND),
     expect: 'pass',
     tx: settleTx(0, 1_000_000, SECOND),
   },
@@ -93,7 +90,7 @@ const settleCases: Case[] = [
     name: 'P6/B5 THE STALE CLOSE: re-posting the SAME seq over a pending claim is refused',
     function: 'settle',
     constructor_args: ctor(0, 1_000_000),
-    args: settleArgs(FIRST),
+    args: signedSettleArgs(FIRST),
     expect: 'fail',
     tx: settleTx(0, 1_000_000, FIRST),
   },
@@ -101,7 +98,7 @@ const settleCases: Case[] = [
     name: 'a LOWER seq than the pending claim is refused -- supersede is strict, not >=',
     function: 'settle',
     constructor_args: ctor(5, 9_000_000),
-    args: settleArgs(FIRST),
+    args: signedSettleArgs(FIRST),
     expect: 'fail',
     tx: settleTx(5, 9_000_000, FIRST),
   },
@@ -109,7 +106,7 @@ const settleCases: Case[] = [
     name: 'THE FORGERY: a State signed by a stranger instead of the buyer is refused',
     function: 'settle',
     constructor_args: ctor(-1, 0),
-    args: settleArgs(FIRST, STRANGER_SK, PROVIDER_SK, STRANGER_PK, PROVIDER_PK),
+    args: signedSettleArgs(FIRST, STRANGER_SK, PROVIDER_SK, STRANGER_PK, PROVIDER_PK),
     expect: 'fail',
     tx: settleTx(-1, 0, FIRST),
   },
@@ -117,7 +114,7 @@ const settleCases: Case[] = [
     name: 'ONE SIGNATURE IS NOT A STATE: the provider signing both halves is refused',
     function: 'settle',
     constructor_args: ctor(-1, 0),
-    args: settleArgs(FIRST, PROVIDER_SK, PROVIDER_SK, PROVIDER_PK, PROVIDER_PK),
+    args: signedSettleArgs(FIRST, PROVIDER_SK, PROVIDER_SK, PROVIDER_PK, PROVIDER_PK),
     expect: 'fail',
     tx: settleTx(-1, 0, FIRST),
   },
@@ -125,7 +122,7 @@ const settleCases: Case[] = [
     name: 'X1 CROSS-SESSION REPLAY: a State signed for another session is refused',
     function: 'settle',
     constructor_args: OTHER_SESSION,
-    args: settleArgs(FIRST),
+    args: signedSettleArgs(FIRST),
     expect: 'fail',
     tx: {
       active_input_index: 0,
@@ -142,7 +139,7 @@ const settleCases: Case[] = [
     name: 'THE DRAIN: a settle keeping more than the fee instead of returning the funds is refused',
     function: 'settle',
     constructor_args: ctor(-1, 0),
-    args: settleArgs(FIRST),
+    args: signedSettleArgs(FIRST),
     expect: 'fail',
     tx: settleTx(-1, 0, FIRST, FUNDED - FEE - 1),
   },
@@ -150,7 +147,7 @@ const settleCases: Case[] = [
     name: 'THE LIE: a settle whose carried state does not match the State it verified is refused',
     function: 'settle',
     constructor_args: ctor(-1, 0),
-    args: settleArgs(FIRST),
+    args: signedSettleArgs(FIRST),
     expect: 'fail',
     tx: settleTx(-1, 0, FIRST, FUNDED - FEE, sessionState(FIRST.seq, 9_000_000)),
   },
@@ -173,7 +170,7 @@ const identityCases: Case[] = PROFILE.identityInState
       name: 'IDENTITY DRIFT: a continuation that rewrites the session_id it carries is refused',
       function: 'settle',
       constructor_args: ctor(-1, 0),
-      args: settleArgs(FIRST),
+      args: signedSettleArgs(FIRST),
       expect: 'fail',
       tx: settleTx(-1, 0, FIRST, FUNDED - FEE, sessionState(FIRST.seq, FIRST.cumulativeSompi, 'c3'.repeat(16))),
     }]

@@ -196,6 +196,7 @@ function settlementGroup(): Group {
 function meterGroup(): Group {
   const texts = ['', 'hello', 'café', '計量', '\u{1F512}', 'a\nb\tc  d', 'x'.repeat(1000)];
   const octets = meterFor('octets');
+  const utf8 = (t: string): Uint8Array => new TextEncoder().encode(t);
   const names = ['octets', 'o200k_base'];
   return {
     section: '6',
@@ -204,7 +205,7 @@ function meterGroup(): Group {
       ...texts.map((text) => ({
         name: `octets of ${JSON.stringify(text).slice(0, 28)}`,
         given: { meter: 'octets', content: text },
-        expect: { units: octets(text), contentDigest: blake3Hex(text) },
+        expect: { units: octets(utf8(text)), contentDigest: blake3Hex(text) },
       })),
       {
         name: 'the tolerance floor belongs to the meter, not the protocol',

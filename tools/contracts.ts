@@ -13,6 +13,7 @@
  * but it fails in a way that looks like a contract bug and is not. `npm run contracts` regenerates
  * first for exactly this reason.
  */
+import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { DEBUGGER } from './sighash.js';
@@ -41,8 +42,12 @@ if (!existsSync(DEBUGGER)) {
 // REBUILD FIRST WHEN THE CONTRACT IS GENERATED. Editing contracts/metered.ag without re-running
 // argentc leaves this suite executing the PREVIOUS bytecode, which passes and proves nothing about
 // the source anyone is reading. Caught exactly that way on 2026-09-10 while changing a constant.
+
+/** argentc's output belongs beside the source it was built from, not beside the caller. */
+const AG_BUILD_DIR = fileURLToPath(new URL('../build/ag', import.meta.url));
+
 if (PROFILE.source) {
-  const built = spawnSync(ARGENTC, ['build', PROFILE.source, '--out', 'build/ag'], { encoding: 'utf8' });
+  const built = spawnSync(ARGENTC, ['build', PROFILE.source, '--out', AG_BUILD_DIR], { encoding: 'utf8' });
   if (built.status !== 0) {
     process.stderr.write(built.stderr ?? `argentc not found at ${ARGENTC}
 `);

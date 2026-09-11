@@ -529,6 +529,30 @@ receives and can count -- bytes, frames, records -- fits the same machinery, and
 to count and needs proof of continued possession, which is a different mechanism with different
 assumptions. **This protocol meters delivery, not possession.**
 
+### 6.4 Delivered content is bytes, and a transport encoding is not the content
+
+Everything this protocol does to delivered content -- digest it under §6.3, count it under §6.1 or
+§6.2, agree on it under §5 -- is defined over **bytes**. An implementation MUST NOT restrict
+delivery to content expressible as text.
+
+This is stated because it is easy to violate without noticing, and the reference implementation did
+for as long as it had only ever sold tokens: every signature on its delivery path took a string, so
+`net.bytes_delivered.v1` could be declared in an Offer and could not actually be served. The
+specification was not wrong; the implementation was narrower than the specification, which is the
+harder failure to see.
+
+1. A transport that cannot carry arbitrary bytes MAY encode them -- JSON bodies, for instance,
+   require it. This reference transport base64-encodes the babel body and names the field
+   `contentB64` so that the encoding is visible at every use.
+2. **The encoding is never what is metered or digested.** Both parties MUST decode before counting
+   and before computing `contentDigest`. Metering the encoded form bills the buyer for roughly a
+   third more than it received, and digesting it commits the parties to the encoding rather than to
+   the content.
+3. A lenient decoder is acceptable but MUST NOT be relied upon. Base64 decoders commonly discard
+   characters outside the alphabet rather than refusing, so a corrupted field decodes to different
+   bytes instead of raising. That cannot pass silently here: different bytes produce a different
+   digest, and §5 rule 3 halts the session on a digest mismatch before any count is consulted.
+
 ## 7. Settlement
 
 ### 7.1 Cooperative close — NOT AVAILABLE in this version

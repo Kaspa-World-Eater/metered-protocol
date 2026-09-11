@@ -8,7 +8,7 @@
 import { digestHex, publicKeyHex } from '../encoding.js';
 import { BuyerSession } from './buyer.js';
 import type { SessionHistory } from '../history.js';
-import type { BabelResponse, PaymentRequiredBody, StateResponse } from './protocol.js';
+import { fromBase64, type BabelResponse, type PaymentRequiredBody, type StateResponse } from './protocol.js';
 import type { Meter } from './provider.js';
 import type { Offer, State } from '../types.js';
 
@@ -45,9 +45,18 @@ export async function readOffer(base: string, buyerPubkey: string): Promise<Offe
 }
 
 export interface ChunkOutcome {
-  content: string;
+  content: Uint8Array;
   state: State;
   billedUnits: number;
+  /**
+   * The two signatures over this State's 72-byte preimage.
+   *
+   * Returned because SETTLEMENT NEEDS THEM and nothing else could reach them. The covenant's
+   * `settle` entry takes both, and a caller holding only the State holds a number it cannot
+   * enforce -- which was true of every caller of this function until a product tried to settle.
+   */
+  providerSig: string;
+  buyerSig: string;
 }
 
 /**
@@ -64,13 +73,22 @@ export async function runBabel(
   const reservation = session.reserve(units);
   const delivered = await post<BabelResponse>(base, '/metered/babel', { reservation, prompt });
 
-  const mine = session.measure(delivered.content, delivered.measurement, reservation.seq);
+  // Decoded before anything is measured, so every number below is taken over the bytes the buyer
+  // actually keeps -- not over the transit encoding they arrived in.
+  const content = fromBase64(delivered.contentB64);
+  const mine = session.measure(content, delivered.measurement, reservation.seq);
   const settled = await post<StateResponse>(base, '/metered/state', { measurement: mine });
 
   const buyerSig = session.countersign(settled.state, settled.providerSig, mine.units);
   await post(base, '/metered/countersign', { state: settled.state, buyerSig });
 
-  return { content: delivered.content, state: settled.state, billedUnits: settled.billedUnits };
+  return {
+    content,
+    state: settled.state,
+    billedUnits: settled.billedUnits,
+    providerSig: settled.providerSig,
+    buyerSig,
+  };
 }
 
 /**

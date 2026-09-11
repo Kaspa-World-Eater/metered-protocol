@@ -1,5 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { utf8 } from '../encoding.js';
+import { fromBase64 } from './protocol.js';
 import { publicKeyHex, signEnvelope, signState } from '../encoding.js';
 import { BuyerSession } from './buyer.js';
 import { requiredFunding } from '../reservation.js';
@@ -23,8 +25,8 @@ const PROVIDER_SK = '22'.repeat(32);
 const STRANGER_SK = '33'.repeat(32);
 
 const meter = meterFor('o200k_base');
-const deliver = (prompt: string, max: number) =>
-  Array.from({ length: max }, (_, i) => `${prompt}${i}`).join(' ');
+const deliver = (prompt: string, max: number): Uint8Array =>
+  utf8(Array.from({ length: max }, (_, i) => `${prompt}${i}`).join(' '));
 
 const TERMS: OfferTerms = {
   v: 1, scheme: 'metered', network: 'kaspa:testnet-10', asset: 'KAS',
@@ -142,8 +144,8 @@ test('F5: sending the SAME measurement twice returns the same State, and does no
     const { offer, session } = await openSession(base, BUYER_SK, meter, 'kaspa:testnet-10');
     const reservation = session.reserve();
     const delivered = await (await post(base, '/metered/babel', { reservation, prompt: 'hi' })).json() as
-      { content: string; measurement: unknown };
-    const mine = session.measure(delivered.content, delivered.measurement as never, reservation.seq);
+      { contentB64: string; measurement: unknown };
+    const mine = session.measure(fromBase64(delivered.contentB64), delivered.measurement as never, reservation.seq);
 
     const first = await post(base, '/metered/state', { measurement: mine });
     const second = await post(base, '/metered/state', { measurement: mine });

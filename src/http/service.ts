@@ -20,9 +20,8 @@
  * 4.4's restart rule true rather than available.
  */
 import { randomBytes } from 'node:crypto';
-import { blake3 } from '@noble/hashes/blake3';
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
-import { signEnvelope } from '../encoding.js';
+import { bytesToHex } from '@noble/hashes/utils';
+import { signEnvelope, partiesCommitment } from '../encoding.js';
 import { ProviderSession, type Deliver, type Meter } from './provider.js';
 import { Checkpointer, type Anchor } from '../checkpoint.js';
 import { memoryStore, type SignerStore } from '../signer.js';
@@ -39,32 +38,32 @@ export interface ServiceOptions {
   meter: Meter;
   deliver: Deliver;
   /** How many sessions to keep. The oldest is evicted past this, halted ones first. */
-  maxSessions?: number;
+  maxSessions?: number | undefined;
   /**
    * SPEC.md 8. Each session gets its OWN Checkpointer over this one anchor, so a session's
    * checkpoint records stay with the session and are evicted with it.
    */
-  anchor?: Anchor;
+  anchor?: Anchor | undefined;
 
   /**
    * SPEC.md 4. Shared across sessions deliberately: SignerRecord is keyed by sessionId, so one
    * store holds every session this provider has ever signed for -- which is exactly what 4.4's
    * restart rule needs to consult. Defaults to memory; src/store.ts survives a restart.
    */
-  store?: SignerStore;
+  store?: SignerStore | undefined;
 
   /**
    * SPEC.md has nothing to say about this: it is an implementation quality. Without it a restart
    * forgets what has been OFFERED and every buyer opens again, losing at most the babel in
    * flight. With it, a buyer does not notice.
    */
-  sessions?: SessionStore;
+  sessions?: SessionStore | undefined;
 }
 
 interface Entry {
   offer: Offer;
   session: ProviderSession;
-  checkpointer?: Checkpointer;
+  checkpointer?: Checkpointer | undefined;
   opened: number;
   halted: boolean;
 }
@@ -89,9 +88,7 @@ export class MeteredService {
     this.evict();
 
     const sessionId = bytesToHex(randomBytes(16)); // SPEC.md 3.1: 16 bytes
-    const parties = bytesToHex(
-      blake3(new Uint8Array([...hexToBytes(buyerPubkey), ...hexToBytes(this.opts.providerPubkey)]), { dkLen: 32 }),
-    );
+    const parties = partiesCommitment(buyerPubkey, this.opts.providerPubkey);
     const offer = signEnvelope(
       {
         ...this.opts.terms,

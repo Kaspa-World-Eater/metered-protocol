@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { utf8 } from '../encoding.js';
 import type { AddressInfo } from 'node:net';
 import type { Server } from 'node:http';
 import { publicKeyHex, signEnvelope, digestHex } from '../encoding.js';
@@ -24,7 +25,8 @@ const PRICE = 3630;
 
 const meter = meterFor('octets');
 /** Exactly `maxUnits` ASCII bytes, beginning with the prompt so a test can tell sessions apart. */
-const deliver = (prompt: string, maxUnits: number) => `${prompt}${'x'.repeat(maxUnits)}`.slice(0, maxUnits);
+const deliver = (prompt: string, maxUnits: number): Uint8Array =>
+  utf8(`${prompt}${'x'.repeat(maxUnits)}`.slice(0, maxUnits));
 
 const TERMS: OfferTerms = {
   v: 1, scheme: 'metered', network: 'kaspa:testnet-10', asset: 'KAS',
@@ -92,7 +94,8 @@ test('TWO BUYERS AT ONCE do not see or disturb each other', async () => {
 
 test('ONE BUYER HALTING does not halt the other', async () => {
   // The liar's session must die; the honest one must keep going.
-  const liar = (content: string) => (content.includes('cheat') ? meter(content) * 3 : meter(content));
+  const liar = (content: Uint8Array) =>
+    (new TextDecoder().decode(content).includes('cheat') ? meter(content) * 3 : meter(content));
   await withService(async ({ base }) => {
     const good = await openSession(base, BUYER_SK, meter, 'kaspa:testnet-10');
     const bad = await openSession(base, OTHER_SK, meter, 'kaspa:testnet-10');
@@ -114,7 +117,7 @@ test('a buyer that catches a lie stops WITHOUT telling the server, and that is f
     await assert.rejects(() => runBabel(base, session, 'x'), /differ by more than/);
     assert.equal(service.isHalted(offer.sessionId), false, 'the server was never told');
     assert.equal(service.size, 1, 'and still holds it, until eviction');
-  }, { meter: (c: string) => meter(c) * 3 });
+  }, { meter: (c: Uint8Array) => meter(c) * 3 });
 });
 
 test('a SERVER-side disagreement halts the session for good, and later requests get 404', async () => {

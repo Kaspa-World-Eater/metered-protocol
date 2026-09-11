@@ -45,13 +45,32 @@ export interface ChunkRequest {
 }
 
 /**
- * What comes back. `content` is the delivered bytes; `measurement` is the PROVIDER's count of
+ * What comes back. `contentB64` is the delivered bytes; `measurement` is the PROVIDER's count of
  * them. The buyer counts the same bytes itself and does not have to believe this.
+ *
+ * BASE64 IS TRANSIT ONLY, and the field is named so that nothing can forget it. JSON has no way
+ * to carry arbitrary bytes, so they are encoded to cross the wire and decoded on arrival -- but
+ * the digest and the unit count are taken over the DECODED bytes at both ends. Metering the
+ * encoded form would bill the buyer for roughly a third more than it asked for, and would agree
+ * a digest over the encoding rather than over the content.
  */
 export interface BabelResponse {
-  content: string;
+  contentB64: string;
   measurement: Measurement;
 }
+
+/** Bytes -> the wire. */
+export const toBase64 = (bytes: Uint8Array): string => Buffer.from(bytes).toString('base64');
+
+/**
+ * The wire -> bytes.
+ *
+ * Node's base64 decoder is LENIENT: it discards anything outside the alphabet rather than
+ * refusing, so a corrupted field decodes to plausible-looking bytes instead of an error. That is
+ * survivable here only because it cannot be silent -- different bytes produce a different digest,
+ * and SPEC.md 5 rule 3 halts the session on a digest mismatch before any count is consulted.
+ */
+export const fromBase64 = (b64: string): Uint8Array => new Uint8Array(Buffer.from(b64, 'base64'));
 
 /** `POST /metered/state` -- the buyer's count, after it has seen the content. */
 export interface StateRequest {
@@ -72,7 +91,7 @@ export interface StateResponse {
 export interface ErrorBody {
   x402Version: number;
   error: string;
-  reason?: string;
+  reason?: string | undefined;
 }
 
 export const errorBody = (error: string, reason?: string): ErrorBody =>

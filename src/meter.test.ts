@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { utf8, blake3Hex } from './encoding.js';
 import { encodeWith, meterFor, resolveMeter, minimumTolerance, MeterUnavailable, available } from './meter.js';
 
 interface Vectors {
@@ -43,13 +44,13 @@ test('the corpus is the adversarial one, not a happy path', () => {
 
 test('the meter counts what the encoder produces', () => {
   const meter = meterFor('o200k_base');
-  for (const c of vectors.cases) assert.equal(meter(c.text), c.ids.length);
+  for (const c of vectors.cases) assert.equal(meter(utf8(c.text)), c.ids.length);
 });
 
 test('SPEC.md 6.3.3: the meter does NOT normalise -- whitespace is content', () => {
   const meter = meterFor('o200k_base');
-  assert.notEqual(meter('a    b'), meter('a b'));
-  assert.notEqual(meter(' a '), meter('a'));
+  assert.notEqual(meter(utf8('a    b')), meter(utf8('a b')));
+  assert.notEqual(meter(utf8(' a ')), meter(utf8('a')));
 });
 
 test('SPEC.md 3.1: an unobtainable meter is REFUSED, never silently substituted', () => {
@@ -62,18 +63,18 @@ test('SPEC.md 3.1: an unobtainable meter is REFUSED, never silently substituted'
 
 test('the registry names what it can actually serve', () => {
   assert.deepEqual(available(), ['o200k_base', 'octets']);
-  for (const name of available()) assert.equal(typeof meterFor(name)('hello'), 'number');
+  for (const name of available()) assert.equal(typeof meterFor(name)(utf8('hello')), 'number');
 });
 
 /* ------------------------------------------- net.bytes_delivered.v1, the second unit */
 
 test('§6 octets counts UTF-8 bytes, which is what contentDigest already covers', () => {
   const octets = meterFor('octets');
-  assert.equal(octets('hello'), 5);
-  assert.equal(octets('café'), 5, 'one two-byte code point');
-  assert.equal(octets('計量'), 6, 'CJK is three bytes each');
-  assert.equal(octets('\u{1F512}'), 4, 'astral is four');
-  assert.equal(octets(''), 0);
+  assert.equal(octets(utf8('hello')), 5);
+  assert.equal(octets(utf8('café')), 5, 'one two-byte code point');
+  assert.equal(octets(utf8('計量')), 6, 'CJK is three bytes each');
+  assert.equal(octets(utf8('\u{1F512}')), 4, 'astral is four');
+  assert.equal(octets(utf8('')), 0);
 });
 
 test('§6 THE EXACT METER: agreeing on the digest means agreeing on the count', () => {
@@ -82,7 +83,7 @@ test('§6 THE EXACT METER: agreeing on the digest means agreeing on the count', 
   // belong to the tokeniser rather than to the content.
   const octets = meterFor('octets');
   for (const text of ['', 'hello', 'café 計量 \u{1F512}', 'a'.repeat(5000)]) {
-    assert.equal(octets(text), new TextEncoder().encode(text).length);
+    assert.equal(octets(utf8(text)), utf8(text).length);
   }
 });
 
@@ -101,4 +102,22 @@ test('§6 a meter measuring the WRONG unit is refused', () => {
 
 test('§6 octets produces no token ids, and says so rather than guessing', () => {
   assert.throws(() => encodeWith('octets', 'hello'), MeterUnavailable);
+});
+
+test('§6 the exact meter measures BYTES, including bytes that are not text', () => {
+  // The reason delivery is byte-typed at all. This is a PNG header followed by a NUL and a lone
+  // 0xFF: not valid UTF-8, not expressible as a string, and exactly what a file-delivery provider
+  // sells. Before the meter took bytes this content could not be metered, only described.
+  const octets = meterFor('octets');
+  const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0xff]);
+  assert.equal(octets(png), 10);
+
+  // Round-tripping it through a string would have LOST bytes, which is the failure this prevents:
+  // the invalid sequences become U+FFFD and the count comes back wrong.
+  const throughText = utf8(new TextDecoder().decode(png));
+  assert.notEqual(octets(throughText), 10, 'text is a lossy container for bytes');
+
+  // The digest is over the same bytes the meter counted, which is what lets this unit run at a
+  // tolerance of 0: agreeing on the digest IS agreeing on the count.
+  assert.notEqual(blake3Hex(png), blake3Hex(png.slice(0, 9)), 'one byte fewer is a different digest');
 });

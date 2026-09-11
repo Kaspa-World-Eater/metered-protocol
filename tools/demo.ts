@@ -32,20 +32,18 @@ import { demoModel } from './model.js';
 import { fileStore } from '../src/store.js';
 import { publicKeyHex, signState } from '../src/encoding.js';
 import { serveMetered } from '../src/http/serve.js';
+import type { Deliver } from '../src/http/provider.js';
 import { MeteredService, type OfferTerms } from '../src/http/service.js';
 import { kaspaAnchor } from './anchor.js';
 import { openSession, runBabel } from '../src/http/client.js';
 import { loadSdk, loadAnchorKey } from './kaspa.js';
-import { compileWithState, covenantAddress } from './covenant.js';
-import { preflightSigscript, awaitUtxo, withState, buildExpire, awaitWindow, closeOutputs, x, type Any } from './live-steps.js';
+import type { Any } from './live-steps.js';
+import { openCovenant, fundCovenant, settleClaim, closeCovenant, type Opened } from './session-chain.js';
 import { reportClose, reportCheckpoints, announceModel } from './demo-report.js';
 import type { Offer, State } from '../src/types.js';
 
 const NETWORK = 'testnet-10' as const;
 const FUND = 50_000_000n;
-const FUND_FEE = 250_000n;
-const SETTLE_FEE = 360_000n;
-const CLOSE_FEE = 400_000n;
 const WINDOW = 2;
 // DELIBERATELY BELOW THE KIP-9 FLOOR. Thirty words at 3,630 sompi earns 108,900 -- about
 // eighteen times too small to be paid out as its own output. That is the exact session that
@@ -66,8 +64,9 @@ const UNIT = BYTES ? 'net.bytes_delivered.v1' : 'llm.output_tokens.v1';
 const METER = BYTES ? 'octets' : 'o200k_base';
 const dir = mkdtempSync(join(tmpdir(), 'metered-demo-'));
 const meter = meterFor(METER);
-const generated = (prompt: string, max: number) =>
-  Array.from({ length: max }, (_, i) => `${prompt}${i}`).join(' ');
+const encoder = new TextEncoder();
+const generated = (prompt: string, max: number): Uint8Array =>
+  encoder.encode(Array.from({ length: max }, (_, i) => `${prompt}${i}`).join(' '));
 
 /**
  * `npm run demo -- --model` meters a REAL language model instead of generated text.
@@ -90,7 +89,7 @@ const USE_MODEL = process.argv.includes('--model');
 async function runSession(
   terms: OfferTerms, providerSk: string, buyerSk: string, funder: string,
   afterOpen: (offer: Offer) => Promise<void>,
-  deliver: (prompt: string, max: number) => string = generated,
+  deliver: Deliver = generated,
 ): Promise<{ offer: Offer; state: State; sigs: [string, string]; service: MeteredService }> {
   // A REAL anchor. SPEC.md 8's checkpoints go to testnet-10 while the session is still running,
   // which is the point of them being non-blocking: the chunks below do not wait for a block.
@@ -160,39 +159,24 @@ async function main(): Promise<void> {
 
   const sdk = await loadSdk();
   const networkId = new sdk.NetworkId(NETWORK);
-  const priv = new sdk.PrivateKey(funder);
-  const from = priv.toKeypair().toAddress(networkId).toString();
   const rpc = new sdk.RpcClient({ resolver: new sdk.Resolver(), encoding: sdk.Encoding.Borsh, networkId });
   await rpc.connect();
   try {
-    let covenant: { hex: string; entries: Record<string, { dispatch_tag: string }>; address: string; utxo: Any } | null = null;
+    let covenant: (Opened & { utxo: Any }) | null = null;
 
-    console.log(`\n  2. SESSION    opening, funding, then running ${CHUNKS} chunks over HTTP`);
+    console.log(`
+  2. SESSION    opening, funding, then running ${CHUNKS} chunks over HTTP`);
     const { offer, state, sigs, service } = await runSession(terms, providerSk, buyerSk, funder, async (o) => {
       // THE COVENANT IS BUILT FROM THE OFFER THE SERVER ACTUALLY ISSUED, so its constructor
       // constants are that session's parties commitment and id. The address is derived from the
       // agreement rather than the agreement being fitted to an address.
-      const built = compileWithState(dir, { parties: o.partiesCommitment, sessionId: o.sessionId, window: WINDOW, seq: -1, sompi: 0 });
-      const address = await covenantAddress(built.hex, NETWORK);
-      const { entries } = await rpc.getUtxosByAddresses([from]);
-      const src = entries.reduce((a: Any, b: Any) => (b.amount > a.amount ? b : a));
-      const fund = sdk.createTransaction(
-        [src], [{ address, amount: FUND }, { address: from, amount: src.amount - FUND - FUND_FEE }], 0n, undefined, 0,
-      );
-      fund.version = 1;
-      fund.gas = 0n;
-      for (const i of fund.inputs) { i.sigOpCount = 0; i.computeBudget = 10; }
-      fund.finalize();
-      await rpc.submitTransaction({ transaction: sdk.signTransaction(fund, [priv], true), allowOrphan: false });
-      const utxo = await awaitUtxo(rpc, address, FUND);
-      if (!utxo) throw new Error('covenant UTXO never appeared');
-      covenant = { ...built, address, utxo };
-      console.log(`     funded     ${Number(FUND) / 1e8} TKAS -> ${address.slice(0, 28)}...`);
+      const op = await openCovenant(dir, o, WINDOW, NETWORK);
+      const utxo = await fundCovenant(rpc, sdk, op, funder, FUND, NETWORK);
+      covenant = { ...op, utxo };
+      console.log(`     funded     ${Number(FUND) / 1e8} TKAS -> ${op.address.slice(0, 28)}...`);
     }, source?.deliver ?? generated);
     if (!covenant) throw new Error('the covenant was never funded');
-    const opened = covenant as { hex: string; entries: Record<string, { dispatch_tag: string }>; address: string; utxo: Any };
-    const utxo = opened.utxo;
-    const parties = offer.partiesCommitment;
+    const opened: Opened & { utxo: Any } = covenant;
     const sessionId = offer.sessionId;
 
     console.log(`     final      seq ${state.seq}, ${state.cumulativeUnits} units, ${state.cumulativeSompi} sompi`);
@@ -202,52 +186,23 @@ async function main(): Promise<void> {
     console.log(`\n  3. ANCHORED   ${checkpoints.length} checkpoint(s), dispatched mid-session without it waiting`);
     reportCheckpoints(checkpoints);
 
-    const ctor = [x(parties), x(sessionId), WINDOW, -1, 0];
-    const outRedeem = withState(opened.hex, state.seq, state.cumulativeSompi);
-    const outAddr = await covenantAddress(outRedeem, NETWORK);
-    const outValue = utxo.amount - SETTLE_FEE;
-    const sigscript = preflightSigscript({
-      name: 'demo settle',
-      function: 'settle',
-      constructor_args: ctor,
-      args: [x(buyerPk), x(providerPk), x(sigs[0]), x(sigs[1]), state.seq, state.cumulativeUnits, state.cumulativeSompi, x(state.prevState ?? '00'.repeat(32))],
-      expect: 'pass',
-      tx: {
-        active_input_index: 0,
-        inputs: [{ utxo_value: Number(utxo.amount), constructor_args: ctor }],
-        outputs: [{ value: Number(outValue), constructor_args: ctor, state: { pendingSeq: state.seq, pendingSompi: state.cumulativeSompi } }],
-      },
-    }, dir);
-    const spend = sdk.createTransaction([utxo], [{ address: outAddr, amount: outValue }], 0n, undefined, 0);
-    spend.version = 1;
-    spend.gas = 0n;
-    spend.inputs[0].sigOpCount = 0;
-    spend.inputs[0].computeBudget = 21;
-    const push = new sdk.ScriptBuilder();
-    push.addData(opened.hex);
-    spend.inputs[0].signatureScript = sigscript + push.toString();
-    spend.finalize();
-    const settleId = (await rpc.submitTransaction({ transaction: spend, allowOrphan: false })).transactionId;
-    const posted = await awaitUtxo(rpc, outAddr, outValue);
-    if (!posted) throw new Error('the claim never posted');
-    console.log(`\n  4. SETTLED    the HTTP session's State, on chain   ${settleId}`);
+    // THE SIGNATURE SCRIPT IS BUILT, not printed by a patched simulator: before that changed, a
+    // metered session could be settled on exactly one machine. tools/sigscript-check.ts proves the
+    // built script and the simulator's agree byte for byte.
+    const claim = await settleClaim(rpc, sdk, opened, opened.utxo, state, {
+      buyerPubkey: buyerPk, providerPubkey: providerPk, buyerSig: sigs[0], providerSig: sigs[1],
+    }, NETWORK);
+    console.log(`
+  4. SETTLED    the HTTP session's State, on chain   ${claim.txid}`);
 
-    await awaitWindow(rpc, WINDOW);
     const buyerAddr = new sdk.PrivateKey(buyerSk).toKeypair().toAddress(networkId).toString();
     const providerAddr = new sdk.PrivateKey(providerSk).toKeypair().toAddress(networkId).toString();
-    const owed = BigInt(state.cumulativeSompi);
-    // The covenant accepts exactly three close shapes and refuses everything else, so the shape
-    // is computed rather than assumed. Guessing gets "script ran, but verification failed", which
-    // says nothing about which rule was broken.
-    const outs = closeOutputs(posted.amount, owed, CLOSE_FEE, buyerAddr, providerAddr);
-    const close = buildExpire(
-      sdk,
-      { buyerPk, providerPk, signerSk: providerSk, redeem: outRedeem, tag: opened.entries.expire?.dispatch_tag ?? '' },
-      posted, outs, WINDOW,
-    );
-    const closeId = (await rpc.submitTransaction({ transaction: close, allowOrphan: false })).transactionId;
-    console.log(`  5. CLOSED     ${closeId}`);
-    await reportClose(rpc, outs, providerAddr, state.cumulativeSompi, state.cumulativeUnits);
+    const closed = await closeCovenant(rpc, sdk, opened, claim, {
+      buyerPubkey: buyerPk, providerPubkey: providerPk, signerSk: providerSk,
+      buyerAddress: buyerAddr, providerAddress: providerAddr,
+    }, state.cumulativeSompi);
+    console.log(`  5. CLOSED     ${closed.txid}`);
+    await reportClose(rpc, closed.outputs, providerAddr, state.cumulativeSompi, state.cumulativeUnits);
 
     // The same checkpoints, read again now the session is over. They said `pending` above because
     // the session did not wait for them, which is SPEC.md 8's rule; they have since resolved on

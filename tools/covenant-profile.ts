@@ -22,6 +22,19 @@
  * would let the two covenants drift apart silently, which is the one thing this suite exists to
  * prevent.
  */
+import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
+/**
+ * Paths are resolved against the PACKAGE, not the working directory.
+ *
+ * They used to be plain relative strings, which worked for as long as everything that compiled a
+ * covenant was run from the root of this repository. The first program to depend on metered from
+ * outside it got "failed to read contracts/metered_session.sil" -- because the file was exactly
+ * where it always is, and the process was somewhere else.
+ */
+const PACKAGE_ROOT = fileURLToPath(new URL('..', import.meta.url));
+const inPackage = (p: string): string => join(PACKAGE_ROOT, p);
+
 /** Everything either covenant's continuation can depend on. */
 export interface SessionState {
   parties: string;
@@ -62,8 +75,8 @@ export const COVENANT_ID = `0x${'7c'.repeat(32)}`;
 
 export const HAND_WRITTEN: CovenantProfile = {
   key: 'sil',
-  contract: 'contracts/metered_session.sil',
-  suite: 'contracts/metered_session.tests.json',
+  contract: inPackage('contracts/metered_session.sil'),
+  suite: inPackage('contracts/metered_session.tests.json'),
   outState: ({ seq, sompi }) => ({ pendingSeq: seq, pendingSompi: sompi }),
   binds: false,
   identityInState: false,
@@ -71,9 +84,9 @@ export const HAND_WRITTEN: CovenantProfile = {
 
 export const ARGENT: CovenantProfile = {
   key: 'ag',
-  source: 'contracts/metered.ag',
-  contract: 'build/ag/sil/MeteredSession.sil',
-  suite: 'contracts/metered_ag.tests.json',
+  source: inPackage('contracts/metered.ag'),
+  contract: inPackage('build/ag/sil/MeteredSession.sil'),
+  suite: inPackage('contracts/metered_ag.tests.json'),
   outState: ({ parties, sessionId, window, seq, sompi }) => ({
     parties: `0x${parties}`,
     session_id: `0x${sessionId}`,

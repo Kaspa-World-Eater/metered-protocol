@@ -1,8 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { AddressInfo } from 'node:net';
+import { utf8 } from '../encoding.js';
 import { publicKeyHex, signEnvelope } from '../encoding.js';
-import { serveMetered } from './serve.js';
 import { type OfferTerms } from './service.js';
 import { withMeteredServer, type Harness } from './harness.js';
 import { openSession, readOffer, runBabel } from './client.js';
@@ -11,13 +10,13 @@ import { meterFor } from '../meter.js';
 import type { Offer } from '../types.js';
 
 const BUYER_SK = '11'.repeat(32);
-const OTHER_SK = '33'.repeat(32);
 const PROVIDER_SK = '22'.repeat(32);
 const PRICE = 3630;
 
 /** SPEC.md 6, net.bytes_delivered.v1: the exact meter, so these tests need no tolerance at all. */
 const meter = meterFor('octets');
-const deliver = (prompt: string, maxUnits: number) => prompt[0]?.repeat(maxUnits) ?? 'x'.repeat(maxUnits);
+const deliver = (prompt: string, maxUnits: number): Uint8Array =>
+  utf8(prompt[0]?.repeat(maxUnits) ?? 'x'.repeat(maxUnits));
 
 const TERMS: OfferTerms = {
   v: 1, scheme: 'metered', network: 'kaspa:testnet-10', asset: 'KAS',
@@ -110,14 +109,14 @@ test('UNDER-DELIVERY IS NOT FRAUD: the buyer is billed for what arrived, not wha
     const out = await runBabel(base, session, 'x');
     assert.equal(out.billedUnits, 3, 'billed for three delivered bytes, not the ten reserved');
     assert.equal(session.spentSompi, 3 * PRICE);
-  }, { deliver: () => 'abc' });
+  }, { deliver: () => utf8('abc') });
 });
 
 test('P1 THE INFLATED COUNT: a provider that overstates what it sent is refused', async () => {
   await withServer(async ({ base }) => {
     const { session } = await openSession(base, BUYER_SK, meter);
     await assert.rejects(() => runBabel(base, session, 'x'), /differ by more than/);
-  }, { meter: (c: string) => meter(c) * 3 });
+  }, { meter: (c: Uint8Array) => meter(c) * 3 });
 });
 
 test('THE EXPOSURE BOUND is enforced server-side, not by the buyer being polite', async () => {
