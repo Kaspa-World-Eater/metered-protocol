@@ -13,8 +13,8 @@ not either party cooperates at the end.
 **The buyer counts the tokens it was given — not the ones it was told about.** Everything else here
 is bookkeeping around that sentence.
 
-- **[Read the explainer](docs/index.html)** — the idea, in plain terms, for people who are not
-  going to read a specification.
+- **[Read the explainer](https://kaspahttp402.github.io/metered-protocol/)** — the idea, in plain
+  terms, for people who are not going to read a specification.
 - **[Read the specification](spec/SPEC.md)** — normative, and the thing to argue with.
 - **[Implement it](spec/CONFORMANCE.md)** — inputs and exact outputs, in a form no implementation
   can pass by accident.
