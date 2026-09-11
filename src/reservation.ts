@@ -2,7 +2,7 @@
  * SPEC.md §3.2 -- the Reservation. One babel, never the session.
  *
  * This is where the exposure bound is actually enforced. The buyer signs an authorisation for a
- * single chunk, and the provider's matching exposure -- "take a chunk, never sign its State" -- is the
+ * single babel, and the mirror threat -- "take a babel, never sign its State" -- is the
  * provider's matching exposure. Both are one chunk, deliberately and symmetrically: `babelUnits`
  * is the whole trust model, which is why the checks here are not conveniences.
  *

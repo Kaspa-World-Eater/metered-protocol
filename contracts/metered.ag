@@ -16,7 +16,7 @@
 // WHAT DOES NOT CHANGE. Argent proves the actor, template and successor-state relationships.
 // Application rules stay explicit `require(...)` conditions, so every measured constant below --
 // the 400,000 fee allowance, the 2,000,000 dust floor, the 2,400,000 fold threshold -- is the
-// same number for the same reason, and PHASE3.md still records how each was measured.
+// same number for the same reason, each measured rather than chosen.
 
 state SessionState {
     // Immutable for the life of the session; carried forward unchanged by every `become`.
@@ -54,7 +54,7 @@ actor MeteredSession owns SessionState {
 
         // cumulative_sompi is load-bearing: it becomes pending_sompi, whose value decides the
         // close shape, and it is the amount actually paid out. The other two need no lower bound
-        // -- see PHASE3.md 3c for why each omission is argued rather than assumed.
+        // -- each omission below is argued rather than assumed.
         require(cumulative_sompi >= 0);
 
         // SPEC.md 3.4.1: sessionId(16) + seq(8) + cumUnits(8) + cumSompi(8) + prevState(32) = 72.

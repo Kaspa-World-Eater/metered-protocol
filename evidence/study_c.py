@@ -181,7 +181,7 @@ def main():
     print("     but NOT zero. 5.1 should say so, because a reader currently infers zero.")
     print("")
     print("     Honest drift being zero is why any of this works, and it also corrects Finding D")
-    print("     in PHASE3.md: the fear that this detector would halt honest sessions is not")
+    print("     earlier: the fear that this detector would halt honest sessions is not")
     print("     supported at realistic chunk sizes. Study A's counter-examples were mostly at")
     print("     chunk=5. What survives of Finding D is that 'persistent' was undefined -- which")
     print("     these numbers now fix.")

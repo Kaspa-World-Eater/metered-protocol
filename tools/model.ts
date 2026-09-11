@@ -8,7 +8,7 @@
  *
  * WHY THE UNIT LINES UP EXACTLY. SPEC.md 6.1 counts the assistant content DELIVERED TO THE BUYER,
  * tokenised with the tokeniser the Offer names -- here `o200k_base`, which is the tokeniser
- * gpt-4o-mini's own `completion_tokens` is computed with. study/provider_study.py checked that
+ * gpt-4o-mini's own `completion_tokens` is computed with. evidence/provider_study.py checked that
  * correspondence on 12 live completions and found exact agreement every time, which is why this
  * adapter can hand the raw text straight to both meters and expect them to agree.
  *

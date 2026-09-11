@@ -66,7 +66,7 @@ STUDY C -- the honest residual baseline, and can 5.1's detector work
      but NOT zero. 5.1 should say so, because a reader currently infers zero.
 
      Honest drift being zero is why any of this works, and it also corrects Finding D
-     in PHASE3.md: the fear that this detector would halt honest sessions is not
+     earlier: the fear that this detector would halt honest sessions is not
      supported at realistic chunk sizes. Study A's counter-examples were mostly at
      chunk=5. What survives of Finding D is that 'persistent' was undefined -- which
      these numbers now fix.

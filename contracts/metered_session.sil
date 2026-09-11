@@ -2,8 +2,8 @@
 // author, and four fund-losing bugs have been found in it so far.
 //
 // 520 of Kaspa's 520-byte element limit, both entry points. ZERO SPARE -- the next change of any
-// size needs one of PHASE1.md 2.3's fallbacks. PHASE1.md 2.2 said "plausibly" under the limit;
-// PHASE3.md 3a, 3c, 3g and 3i replace that word with a number and record every pass.
+// size needs one of the message-shape fallbacks considered during design. Every reduction pass
+// below was measured against the compiler rather than estimated.
 //
 // PROVEN ON CHAIN, not merely compiled: settle, supersede, a stale claim refused by consensus,
 // the two-output split, and the dust fold all run on testnet-10. 21 simulator cases cover the
@@ -25,10 +25,10 @@
 // carrying (seq, cumulativeSompi) forward as contract state, and starts the response window. A
 // higher-seq settle replaces it. `expire` pays out once the window has passed. SPEC.md 7.2's
 // settle row reads as though settle itself pays; it cannot, or there would be nothing left to
-// supersede. Recorded as Finding C in PHASE3.md.
+// supersede.
 //
 // NATIVE STATE, not a bytecode splice. v1.0.0 has real state fields and validateOutputState; the
-// splice-your-own-bytecode pattern in the pre-1.0 examples is no longer needed. PHASE3.md Finding
+// splice-your-own-bytecode pattern in the pre-1.0 examples is no longer needed. Finding
 // B claimed otherwise and was wrong -- see the correction recorded there.
 // THE FEE ALLOWANCE, and why it is 400,000.
 //

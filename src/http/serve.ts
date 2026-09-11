@@ -4,7 +4,7 @@
  *
  * ROUTING IS BY sessionId, AND IT COSTS NOTHING EXTRA. Every message in SPEC.md 3 already carries
  * one, because the specification needed it to stop a Reservation or Measurement being lifted from
- * one session into another (threat X1, cross-session replay). A field that exists for a security reason turns
+ * one session into another -- threat X1. A field that exists for a security reason turns
  * out to be exactly the routing key a multi-session server needs, so there is no session cookie,
  * no header, and no server-side handle to leak or confuse.
  *

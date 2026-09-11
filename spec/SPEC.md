@@ -38,7 +38,7 @@ the tower, which is where two parties last stopped being able to agree on words.
 
 ### 0.1 What decided the parameters
 
-Two studies ran before this document was written. They are in `../study/`, seeded and reproducible.
+Two studies ran before this document was written. They are in `../evidence/`, seeded and reproducible.
 
 | Finding | Consequence |
 |---|---|
@@ -515,8 +515,8 @@ case pays for a script, and §7.1 was written as though it did not.
 
 **What a close costs today, plainly:** two transactions -- `settle`, then `expire` after
 `responseWindowDaa` -- rather than one. A cooperative path would save one transaction fee and the
-window. Whether a cooperative close is worth the 103 bytes it measures at is an open decision rather than
-an oversight, and it is recorded here so that a later version can take it up deliberately.
+window. Whether a cooperative close is worth the 103 bytes it measures at is an open decision
+rather than an oversight, and it is recorded here so a later version can take it up deliberately.
 
 ### 7.2 Unilateral close
 

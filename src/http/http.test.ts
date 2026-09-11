@@ -93,7 +93,7 @@ test('the buyer refuses a wrong network before spending anything', async () => {
 });
 
 test('UNDER-DELIVERY IS NOT FRAUD: the buyer is billed for what arrived, not what it reserved', async () => {
-  // the under-delivery case: aborting mid-chunk costs the PROVIDER revenue, not the buyer money. A
+  // Aborting mid-babel costs the PROVIDER revenue, not the buyer money. A
   // one-sided scheme cannot offer this, because there the seller's number is the only number.
   await withServer(async ({ base }) => {
     const { session } = await openSession(base, BUYER_SK, meter);

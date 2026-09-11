@@ -147,8 +147,8 @@ test('a State signature cannot be lifted onto a different sequence number', () =
   assert.equal(verifyState({ ...STATE, seq: 4 }, sig, PK), false);
 });
 
-test('a State signature cannot be lifted into another session -- threat X1, cross-session replay', () => {
-  // This is why sessionId stays in the preimage. one fallback considered during design would drop it to
+test('a State signature cannot be lifted into another session -- threat X1', () => {
+  // This is why sessionId stays in the preimage. Dropping it from the digest would
   // save its width; this test is the defence that would cost, and the covenant fits without it.
   const sig = signState(STATE, SK);
   assert.equal(verifyState({ ...STATE, sessionId: 'c3'.repeat(16) }, sig, PK), false);

@@ -20,11 +20,12 @@ import { pathToFileURL } from 'node:url';
 export type Network = 'testnet-10' | 'testnet-11' | 'mainnet';
 
 /**
- * The rusty-kaspa WASM bindings, which are NOT vendored here: they are a large binary artefact
- * with their own release cadence, and pinning a copy in a protocol repository would be the wrong
- * kind of convenience. Point METERED_KASPA_SDK at `kaspa.js` from a rusty-kaspa WASM release.
+ * The rusty-kaspa WASM bindings, which are NOT vendored here: 12 MB of WASM with its own release
+ * cadence. Point METERED_KASPA_SDK at `kaspa.js` from a nodejs build, or put the same line in
+ * ~/.metered/kaspa.env beside the key -- outside the repository, like everything else that is
+ * specific to one machine.
  *
- * Only the chain tooling needs this. The specification, the conformance vectors and both
+ * Only the chain tooling needs it. The specification, the conformance vectors and both
  * implementations run without it.
  */
 const SDK_ENV = 'METERED_KASPA_SDK';
@@ -36,17 +37,22 @@ type Sdk = any;
 
 let cached: Sdk | null = null;
 
+/** Read a NAME=value line from the key file, so a machine-specific path stays out of the repository. */
+function fromKeyFile(name: string): string | undefined {
+  if (!existsSync(KEY_FILE)) return undefined;
+  const match = readFileSync(KEY_FILE, 'utf8').match(new RegExp(`^${name}=(.+?)[ \\t\\r]*$`, 'm'));
+  return match?.[1];
+}
+
 /** Loads the vendored rusty-kaspa WASM bindings. Node 21+ supplies the WebSocket global itself. */
 export async function loadSdk(): Promise<Sdk> {
   if (cached) return cached;
-  const entry = process.env[SDK_ENV];
-  if (!entry) throw new Error(`set ${SDK_ENV} to kaspa.js from a rusty-kaspa WASM release`);
-  if (!existsSync(entry)) {
+  const entry = process.env[SDK_ENV] ?? fromKeyFile(SDK_ENV);
+  if (!entry || !existsSync(entry)) {
     throw new Error(
-      `Kaspa SDK not found at ${entry}\n\n` +
-        'It is not vendored in this repository (12 MB of WASM). Point METERED_KASPA_SDK at a\n' +
-        'kaspa-wasm nodejs build\'s kaspa.js -- kaspa-depin vendors one under\n' +
-        'packages/kaspa/vendor/kaspa-wasm-2.0.1/.',
+      `Kaspa SDK not found${entry ? ` at ${entry}` : ''}.\n\n` +
+        `Set ${SDK_ENV} to kaspa.js from a rusty-kaspa WASM nodejs build, or add\n` +
+        `${SDK_ENV}=<path> to ${KEY_FILE}.`,
     );
   }
   const imported = await import(pathToFileURL(entry).href);
