@@ -18,7 +18,7 @@
   "buyerPubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
   "providerPubkey": "466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
   "partiesCommitment": "62e84a374e44f83866d72147508efd746dad5e0d599269e79392741fa8781ab0",
-  "sig": "cd3f63577a5360f87274852648969c0abb8516c159e8bc9e4ab0012220c224c17caa5bdf4dbcba6e4339cf07c728e833eb5680020fcc85ca746693a8cf2005bb"
+  "sig": "796c960dec92a764b86b359f34a2a5d2b6a1c6dd8230d81b77f7b9fb0eaee136fc4cf1153fde23e1e94a9b6edccc6c5f3e3064ca20369a5d00aac107d0027b08"
  },
  "groups": [
   {
@@ -205,7 +205,7 @@
        "buyerPubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
        "providerPubkey": "466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
        "partiesCommitment": "62e84a374e44f83866d72147508efd746dad5e0d599269e79392741fa8781ab0",
-       "sig": "cd3f63577a5360f87274852648969c0abb8516c159e8bc9e4ab0012220c224c17caa5bdf4dbcba6e4339cf07c728e833eb5680020fcc85ca746693a8cf2005bb"
+       "sig": "796c960dec92a764b86b359f34a2a5d2b6a1c6dd8230d81b77f7b9fb0eaee136fc4cf1153fde23e1e94a9b6edccc6c5f3e3064ca20369a5d00aac107d0027b08"
       },
       "publicKey": "466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
       "field": "sig"
@@ -234,7 +234,7 @@
        "buyerPubkey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
        "providerPubkey": "466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27",
        "partiesCommitment": "62e84a374e44f83866d72147508efd746dad5e0d599269e79392741fa8781ab0",
-       "sig": "cd3f63577a5360f87274852648969c0abb8516c159e8bc9e4ab0012220c224c17caa5bdf4dbcba6e4339cf07c728e833eb5680020fcc85ca746693a8cf2005bb"
+       "sig": "796c960dec92a764b86b359f34a2a5d2b6a1c6dd8230d81b77f7b9fb0eaee136fc4cf1153fde23e1e94a9b6edccc6c5f3e3064ca20369a5d00aac107d0027b08"
       },
       "publicKey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa",
       "field": "sig"
@@ -254,7 +254,7 @@
        "cumulativeSompi": 1996500,
        "prevState": null
       },
-      "signature": "0287a7be0fe767b02a93f24b7d6a4ade4267fec8f6e6c57f91df3c97aa8bb989ba16488e1cc93bc7c70658b3a73cecc4fda5490c29523bdaca1282d2051a940b",
+      "signature": "a4502b9f9d997dd57071fce5c67bd1846f7678dc3b5a16a0887849d409accb7bdc916040c40f9b004d6ef805aa9e27bf19c06cb00378957be573f50303bd9100",
       "publicKey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
      },
      "expect": {
@@ -272,7 +272,7 @@
        "cumulativeSompi": 1996501,
        "prevState": null
       },
-      "signature": "0287a7be0fe767b02a93f24b7d6a4ade4267fec8f6e6c57f91df3c97aa8bb989ba16488e1cc93bc7c70658b3a73cecc4fda5490c29523bdaca1282d2051a940b",
+      "signature": "a4502b9f9d997dd57071fce5c67bd1846f7678dc3b5a16a0887849d409accb7bdc916040c40f9b004d6ef805aa9e27bf19c06cb00378957be573f50303bd9100",
       "publicKey": "4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
      },
      "expect": {
@@ -297,7 +297,7 @@
        "cumulativeUnits": 550,
        "contentDigest": "063eca1a984bed0d83f038c2c63877d2d2fedb4613fc12bf45fa2c45bad2d1cc",
        "measurementId": "55af581dd51e7375c29f247b70eea67d",
-       "sig": "f5faee79a54fe477d5af77ee9581e060e4974aaf45957021f8ca4c99d95d2bcb0bff701979ef9bd0534b4510c2edee1e1b253a4dfe6f808f26807c4a4ad6eaa6"
+       "sig": "e61de1a552aa0ca43ca40ae08023a6a74228bfab00e8909f64fb018e3bc1e8757850533b7ef37713021b3fc795f57e7c7ff7cd52466789ff3b6e1a1debc7cd56"
       },
       "provider": {
        "v": 1,
@@ -308,7 +308,7 @@
        "cumulativeUnits": 550,
        "contentDigest": "063eca1a984bed0d83f038c2c63877d2d2fedb4613fc12bf45fa2c45bad2d1cc",
        "measurementId": "c29347185f14bda8c1012d9e143c6c2b",
-       "sig": "613908b1e2343ba70e421ecec807f8c91008d441ee2d63a4eb03f8f8b864fdacf19a10da7b2d9a865372e5692e5fefa6d298449936b6728bbd8bbaa5bc5e95c1"
+       "sig": "c8a19ff74d24e51efa3e8c5b39b0811c3d588cb60d991359998cc4bbf4123af94d67578ed9e33e58f77c103932028ec744d9bb7d073e5df48ab95ba9ed7bc7f9"
       },
       "seq": 0,
       "toleranceAbs": 1
@@ -332,7 +332,7 @@
        "cumulativeUnits": 549,
        "contentDigest": "063eca1a984bed0d83f038c2c63877d2d2fedb4613fc12bf45fa2c45bad2d1cc",
        "measurementId": "55af581dd51e7375c29f247b70eea67d",
-       "sig": "c3bcebc010a2f5290f5a1094af53d0b796914d387bfadf3e3eaa062ca4206a8df82cab3685dd74f5ceb02ded54585a6271cb24b2b39eb4bf1bbf11c563b5334c"
+       "sig": "f66b25d4d04799b68be45096855589d5894d6e282c4937d150b901b1aaad332b7c7d2f44efc7f88fd6367e4f56b022cf5f73233465f39ca9a80bf7b27c63f930"
       },
       "provider": {
        "v": 1,
@@ -343,7 +343,7 @@
        "cumulativeUnits": 550,
        "contentDigest": "063eca1a984bed0d83f038c2c63877d2d2fedb4613fc12bf45fa2c45bad2d1cc",
        "measurementId": "c29347185f14bda8c1012d9e143c6c2b",
-       "sig": "f5abf650c2f49bd7e4d3d00a0fb12a10e047241dc3396dbde53da654b93a564a7dbb07b59fc84df21f6e481b077f4a7ae0f6dafa7e33a8e5de1ae5ba14f36b88"
+       "sig": "6bf9b6a68908dcbcf51a56e59d1dd78c976c1bea9f78ad1556b52f0b394d5619b5a9d8bf4b9e298dadb5494d36c796b9f830e2b19a33a2a46189979c3e81bd6a"
       },
       "seq": 0,
       "toleranceAbs": 1
@@ -367,7 +367,7 @@
        "cumulativeUnits": 500,
        "contentDigest": "063eca1a984bed0d83f038c2c63877d2d2fedb4613fc12bf45fa2c45bad2d1cc",
        "measurementId": "55af581dd51e7375c29f247b70eea67d",
-       "sig": "e954fd14ffd3f187597757803aca1e894b9169e3b3c406d56dd7e913193e76896a575ce7342ef59c0618ab9b725f43bbe8c328cd69c73e6ba3e026bfea09be00"
+       "sig": "62bf0493afc74f95c508b4cd1119ffbb47201367c0dcfd2666df4518076e261104f45899e2840d14455b46a6621c59c5ac02108f642609fe5e7869f1168b1697"
       },
       "provider": {
        "v": 1,
@@ -378,7 +378,7 @@
        "cumulativeUnits": 550,
        "contentDigest": "063eca1a984bed0d83f038c2c63877d2d2fedb4613fc12bf45fa2c45bad2d1cc",
        "measurementId": "c29347185f14bda8c1012d9e143c6c2b",
-       "sig": "6a709b3adb55331aec5dc2bdcb4205ea15805c13e96fc657756db7ee90f13335dac99660f045ac0143d9046a4661cf395a82b55099b1de3a48be6d4ec59c8d57"
+       "sig": "b481737b1c8d831b3c898dfdc5f3691ea2ebdb5e00aafb41e9f5d52cd46db282284f5934837e9c7859d6c77525663cf3f1dd7f551936c2f9b382a74c600fe68a"
       },
       "seq": 0,
       "toleranceAbs": 1
@@ -401,7 +401,7 @@
        "cumulativeUnits": 550,
        "contentDigest": "a7875304962469af06a8e9efcb3cf30f65312f5258879d66b2349826bb91a0af",
        "measurementId": "55af581dd51e7375c29f247b70eea67d",
-       "sig": "df3b629a53c490dc61005c7850e4131e5237a2cd9beec171f8d7ccf5d8389bc70226b51a583947e5b46b6d64f0c01adfd97c7516e24c5c41e672e4e24711382b"
+       "sig": "2d3ff4d85f0945c0bf6c0f28625ba635ef860125c0d021bf4d60f211bd88343e42d9cdac0b2eb1ec01b2f192ff8a4ffd0dfec1273cda971c9291f6b3bb794adc"
       },
       "provider": {
        "v": 1,
@@ -412,7 +412,7 @@
        "cumulativeUnits": 550,
        "contentDigest": "063eca1a984bed0d83f038c2c63877d2d2fedb4613fc12bf45fa2c45bad2d1cc",
        "measurementId": "c29347185f14bda8c1012d9e143c6c2b",
-       "sig": "38046177573553544cf0ab622540d77f853daa5421148829afbd805caf6637e16afe9c1cc3b0fa43c85ae34dd7ee4a97dd2eaf2a7da3419a248b08700087d0c3"
+       "sig": "ea579f1b42f41fb21ebd301cb7686741743802df4a37501a06f561e243eb629499a1e620c0a9fb4ad1eec29fd723fc813874d0f408371bf6e4cbca4250ae0532"
       },
       "seq": 0,
       "toleranceAbs": 1
