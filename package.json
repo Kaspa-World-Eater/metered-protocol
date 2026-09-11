@@ -1,18 +1,35 @@
 {
-  "name": "metered",
+  "name": "metered-protocol",
   "version": "1.0.0",
   "description": "A chunked, two-sided payment scheme for metered work, settled on Kaspa.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./chain": "./tools/chain.ts"
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    },
+    "./chain": {
+      "types": "./dist/tools/chain.d.ts",
+      "import": "./dist/tools/chain.js"
+    }
   },
-  "types": "./src/index.ts",
+  "types": "./dist/src/index.d.ts",
+  "files": [
+    "dist",
+    "contracts",
+    "spec/SPEC.md",
+    "spec/CONFORMANCE.md",
+    "spec/conformance-vectors.json",
+    "README.md",
+    "LICENSE"
+  ],
   "license": "MIT",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
+    "build": "node build.mjs",
+    "prepublishOnly": "npm run build && npm test",
     "test": "node --import tsx --test \"src/**/*.test.ts\"",
     "conformance": "tsx tools/conformance.ts",
     "conformance:py": "python impl-py/conformance.py",

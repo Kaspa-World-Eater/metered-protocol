@@ -38,12 +38,39 @@ export {
 } from './http/protocol.js';
 
 /** Units and meters (SPEC.md 6). */
-export { resolveMeter, meterFor, minimumTolerance, available, MeterUnavailable } from './meter.js';
+export { resolveMeter, meterFor, minimumTolerance, available, encodeWith, MeterUnavailable } from './meter.js';
 
 /** Durability. A provider that holds money must not forget what it has signed (SPEC.md 4). */
-export { fileStore, fileHistory, fileSessionStore } from './store.js';
-export { memoryStore, type SignerStore } from './signer.js';
+export { fileStore, fileHistory, fileSessionStore, type SessionStore } from './store.js';
+export { memoryStore, SignerObligationError, type SignerStore, type SignerRecord } from './signer.js';
 export { memoryHistory, type SessionHistory } from './history.js';
+
+/**
+ * The types an implementable interface is made of.
+ *
+ * These are here because leaving them out made the surface LOOK complete and be unusable:
+ * `ServiceOptions` accepts an `anchor` and a `sessions` store, and neither the `Anchor` interface
+ * nor `SessionStore`'s snapshot type could be reached, so a caller could see where its own
+ * implementation was meant to go and had no way to write one. A type named in an exported
+ * signature is part of the surface whether or not anybody remembered to say so.
+ */
+export { Checkpointer, isCheckpointBabel, type Anchor, type CheckpointRecord } from './checkpoint.js';
+export type { SessionSnapshot } from './http/provider.js';
+export type { BabelCursor } from './reservation.js';
+export type { BiasState } from './bias.js';
+export { ReservationRejected, ReservationUnauthenticated, acceptReservation } from './reservation.js';
+export { MAX_BODY_BYTES, type ServeOptions } from './http/serve.js';
+export type { StateResponse, ErrorBody } from './http/protocol.js';
+
+/**
+ * SPEC.md 7.3a. The response window is the PROVIDER'S DEADLINE: once the covenant ages past it
+ * with no claim pending, the buyer can take back everything, including work already delivered.
+ * A provider that never asks itself when to settle will eventually deliver for free.
+ */
+export {
+  shouldSettle, acceptPolicy, worstCaseExposure, PolicyRejected, CONFIRM_MARGIN_DAA,
+  type ExposurePolicy, type Exposure,
+} from './deadline.js';
 
 /** Accepting an Offer, and what a session costs to fund (SPEC.md 3.1, 7.4b). */
 export { acceptOffer, OfferRejected } from './offer.js';
@@ -53,7 +80,8 @@ export { priceOf, requiredFunding, CLOSE_FEE_SOMPI, MIN_COVENANT_SOMPI } from '.
 export {
   publicKeyHex, signEnvelope, signState, verify, verifyState,
   canonicalize, digestHex, blake3Hex, utf8, settlementPreimage,
+  partiesCommitment, stateSigningPayload, settlementDigest,
 } from './encoding.js';
 
 /** The messages themselves. */
-export type { Offer, Reservation, Measurement, State, Halt } from './types.js';
+export type { Offer, Reservation, Measurement, State, Halt, HaltReason, Reconciled } from './types.js';
