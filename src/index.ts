@@ -83,5 +83,13 @@ export {
   partiesCommitment, stateSigningPayload, settlementDigest,
 } from './encoding.js';
 
+/**
+ * Settling through the kaspa-x402 escrow channel (SPEC.md 3.5, docs/RAIL.md). The voucher is
+ * theirs; this turns an agreed State into one and checks one.
+ */
+export { voucherForState, verifyVoucher, voucherPreimage, VoucherRefused, type Voucher, type ChannelRef } from './rail/voucher.js';
+export { VoucherRequired } from './http/provider.js';
+export { ChannelRefused } from './http/service.js';
+
 /** The messages themselves. */
-export type { Offer, Reservation, Measurement, State, Halt, HaltReason, Reconciled } from './types.js';
+export type { Offer, Reservation, Measurement, State, Halt, HaltReason, Reconciled, ChannelProposal } from './types.js';

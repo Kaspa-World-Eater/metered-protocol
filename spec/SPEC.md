@@ -139,10 +139,11 @@ Sent by the provider inside the HTTP 402 response as an x402 `PaymentRequirement
 | `maxBabels` | int | Session ceiling. MUST be ≥ 1. |
 | `toleranceAbs` | int | **MUST be ≥ the meter's floor** (§6): 0 for an exact meter, 1 otherwise. |
 | `checkpointEvery` | int | Chunks between checkpoints. `0` disables checkpointing. |
-| `responseWindowDaa` | int | **Relative** sequence delay. MUST be in `1..=4294967295`. See §7.3. |
+| `responseWindowDaa` | int | **Relative** sequence delay. MUST be in `1..=4294967295`. See §7.3a. |
 | `buyerPubkey` | hex[32] | BIP340 x-only. |
 | `providerPubkey` | hex[32] | BIP340 x-only. |
-| `partiesCommitment` | hex[32] | `blake3(buyerPubkey ‖ providerPubkey)`. |
+| `partiesCommitment` | hex[32] | `blake3(buyerPubkey ‖ providerPubkey)`, over the 64 raw key bytes. |
+| `channel` | object, optional | `{ covenantId: hex[32], vouchedSompi: int }`. The kaspa-x402 escrow channel this session settles through, and the lifetime ceiling the buyer has already vouched on it. Present iff the session settles on that rail (§3.5). `vouchedSompi` MUST be ≥ 0. |
 | `sig` | hex[64] | Provider signature. |
 
 A buyer MUST reject an Offer with a `toleranceAbs` below its meter's floor (§6), an absent or
@@ -272,6 +273,42 @@ The only object that can settle. Carries **two** signatures.
 Both signatures are computed over the **settlement preimage** of §3.4.1 -- **not** over the
 State's canonical JSON with its signature fields absent, which is how every other signed object in
 this document works. See §2.
+
+### 3.5 The voucher, when the session settles through a kaspa-x402 channel
+
+A State is what the parties agreed. On the kaspa-x402 `batch-settlement` rail, what moves money is
+a **voucher**: `{ covenantId, amount, signature }`, signed by the buyer alone, where `amount` is a
+lifetime cumulative ceiling the seller may claim up to and the chain enforces only that ceiling.
+Its construction -- preimage, digest, signature -- is the rail's and is not restated here; see
+docs/RAIL.md and `@kaspa-x402/core`.
+
+Two rules make the State and the voucher one act of agreement rather than two:
+
+1. **The buyer MUST send the voucher for State `n` in the same message as its countersignature of
+   State `n`**, and that voucher's `amount` MUST equal `channel.vouchedSompi + cumulativeSompi`
+   of that State. A voucher for less is a buyer paying less than it agreed; for more, a buyer
+   overpaying, and the provider MUST refuse either.
+2. **The provider MUST NOT deliver babel `n+1` until it holds a valid voucher for State `n`.**
+   Without this, a buyer could sign every State and pay for none, and the provider would hold an
+   agreed debt the chain will not honour. With it, the provider's exposure is exactly one babel --
+   what it always was.
+
+A missing or wrong voucher is neither an authentication failure (§5.2) nor a disagreement (§5): the
+number is agreed and the money is not yet authorised. The provider refuses the countersignature
+and any further babel, states why, and the session resumes when the voucher arrives.
+
+**How a session comes to be on a channel.** The buyer opens the channel -- it is the buyer's
+money -- and then proposes it when opening the session: `POST /metered/open` MAY carry `channel:
+{ covenantId, timeoutDaa, settledTotal, active: { txid, index, amount, scriptPublicKey } }`, which is
+enough for the provider to rebuild the escrow script and find the UTXO. The provider MUST verify
+the proposal against the chain before naming the channel in its Offer, and MUST refuse it if it
+cannot verify. Only what the provider itself confirmed goes into `channel`; the buyer MUST refuse
+an Offer that names a channel other than the one it proposed.
+
+The voucher's `amount` is a property of the **channel**, not the session: a channel outlives
+sessions, and each session's vouchers continue the ceiling from where the last left off. That is
+what `channel.vouchedSompi` carries, and a buyer keeping its own record of it MUST refuse an Offer
+whose value differs from that record.
 
 ### 3.4.1 The settlement preimage
 
@@ -555,230 +592,32 @@ harder failure to see.
 
 ## 7. Settlement
 
-### 7.1 Cooperative close — NOT AVAILABLE in this version
+**Settlement is on the kaspa-x402 rail.** A metered session determines *how much is owed* by
+two-sided measurement (§5) and records it in a doubly-signed State (§3.4). What moves the money is
+the `batch-settlement` escrow of the Kaspa x402 reference implementation
+([kaspa-x402.org](https://kaspa-x402.org)): the buyer opens a channel, signs a voucher for the
+agreed cumulative total after each babel (§3.5), and the seller claims up to that ceiling. metered
+does not define its own on-chain settlement, deliberately -- a second escrow covenant for Kaspa
+would duplicate work already on the standards track, and the metering is the part that is new.
 
-~~Both parties sign an **ordinary spend** paying `cumulativeSompi` to the provider and the
-remainder to the buyer. **The covenant is not executed.** This is what happens almost every time,
-and keeping it off the covenant path removes nearly all the script-size pressure from the common
-case.~~
+The full mechanics -- the voucher preimage, the channel lifecycle, the proof that a seller cannot
+claim past what the buyer vouched -- are in **§3.5** and **docs/RAIL.md**, verified end to end on
+testnet-10.
 
-**That is not implementable, and the reason is structural rather than a bug.** The session's funds
-sit at a covenant P2SH address. A P2SH output cannot be spent without supplying its redeem script
-and satisfying it, so **every** close executes the covenant. There is no "ordinary spend" available
-to a UTXO locked by a script, and the sentence about removing script-size pressure has it exactly
-backwards: a cooperative close must be a THIRD ENTRY POINT, and entry points are what script size
-is made of.
+**Historical note.** Versions ≤ 1.x carried a self-contained SilverScript/Argent covenant with its
+own `settle`/`expire` entries, chain-proven on testnet, and this section specified it. That covenant
+is retained in git history and in `contracts/` for reference, but it is no longer the settlement
+path and is not part of the protocol a new implementation must reproduce. The one piece of it worth
+keeping in mind is §7.3a's finding, which the rail inherits:
 
-**Measured, 2026-09-10.** A minimal cooperative entry -- bind the parties, check two signatures,
-constrain no outputs because two consenting parties have already agreed the split -- takes the
-contract from 516 bytes to **619**, against a limit of 520. It costs **103 bytes** and there are
-**4** spare.
+### 7.3a The response window is the provider's DEADLINE
 
-**Two custody models, and this version picked one.**
-
-| | Funds live at | Cooperative close | Unilateral close |
-|---|---|---|---|
-| **Covenant** (this version) | a covenant P2SH | a third entry, +103 bytes | `settle` then `expire`, consensus-enforced |
-| **Channel** (Lightning-shaped) | a plain 2-of-2 | an ordinary spend, free | pre-signed asymmetric commitments plus revocation |
-
-They are alternatives, not complements: one UTXO cannot be both a bare 2-of-2 and a covenant. The
-covenant model was chosen because consensus enforces the sequence ordering directly, which removes
-revocation secrets and the entire class of bugs that comes with them. The price is that the common
-case pays for a script, and §7.1 was written as though it did not.
-
-**What a close costs today, plainly:** two transactions -- `settle`, then `expire` after
-`responseWindowDaa` -- rather than one. A cooperative path would save one transaction fee and the
-window. Whether a cooperative close is worth the 103 bytes it measures at is an open decision
-rather than an oversight, and it is recorded here so a later version can take it up deliberately.
-
-### 7.2 Unilateral close
-
-Used when a counterparty is unresponsive or a party refuses to co-sign. Three paths:
-
-**Two entry points, not three.** Phase 1's script budget found that three paths plus a
-continuation state does not plausibly fit in 520 bytes, and that `supersede` need not be its own
-entry — it is a guard on `settle`.
-
-| Path | Who | What consensus enforces |
-|---|---|---|
-| `settle` | Either party with a doubly-signed State | Both signatures verify against `partiesCommitment` over the §3.4.1 preimage. **If a State is already pending, this one MUST carry a strictly higher `seq`** — this is supersede, as a guard rather than a branch. **`settle` pays no one.** It posts the claim: the single output returns the funds to this same covenant carrying `(seq, cumulativeSompi)` as state, and the response window restarts. |
-| `expire` | Either party after the response window | Pays out the pending claim — `cumulativeSompi` to the provider, the remainder to the buyer. **If no claim was ever posted, refunds the buyer entirely.** |
-
-**Settlement is two-phase, and it has to be.** An earlier draft of this table said `settle` "pays
-exactly `cumulativeSompi` and the remainder" *and* that a later `settle` supersedes it. Those
-cannot both hold: once the money is paid the covenant is spent and there is nothing left to
-supersede. §7.5's "a stale close that has already been **accepted**" was always describing a
-posted claim, not a completed payout. Found by writing
-the covenant.
-
-### 7.2a One covenant per transaction
-
-**A closing transaction MUST spend exactly one covenant input.** `expire` enforces
-`tx.inputs.length == 1`.
-
-The reason is that `expire` pays to `P2PK(buyer)` and `P2PK(provider)`, and those scripts are not
-session-specific. Two sessions between the same two parties therefore produce **identical output
-scripts**, so one pair of outputs can satisfy both inputs' checks at once -- each input reads its
-own `total` and each is separately satisfied, while only one payout exists.
-
-Measured before the rule was added: two covenant inputs of 10,000,000 sompi each, closed with
-outputs totalling 9,600,000, was **accepted**. 10,400,000 sompi -- more than half the money --
-went to fee. Either party can sign such a transaction, so it is a griefing attack against whoever
-has more at stake.
-
-`settle` is not exposed the same way, because its single output is the continuation P2SH and that
-script embeds the `sessionId`; two sessions cannot share one. The rule is nonetheless stated for
-the whole scheme rather than for one entry, because the property being relied on is that **a
-covenant accounts for every input carrying it**, and a future entry that pays to a
-non-session-specific script would reintroduce this without warning.
-
-Found by reading Argent's leader/delegate input-group invariants, whose Rule 3 requires exactly
-this accounting.
-
-### 7.3 The response window is relative, not absolute
-
-`this.age` in SilverScript lowers to `OpCheckSequenceVerify`, which reads the spending input's
-`sequence` field — **not** a current-DAA context. Therefore:
-
-- `responseWindowDaa` is a **relative** delay, satisfied by setting the spending input's `sequence`.
-- It MUST fit the low-32-bit encoding: `1..=4294967295`.
-- The disabled bit (`1 << 63`) MUST be unset. Mask `0x00000000ffffffff`.
-
-### 7.3a The window is the provider's DEADLINE
-
-Because the delay is relative to the **covenant UTXO being spent**, the clock starts when the
-covenant is funded and every `settle` restarts it by creating a fresh output. That has a
-consequence §7.3's mechanics do not state, and it is the sharpest rule in this document:
-
-**Once the covenant UTXO is older than `responseWindowDaa` and no claim is pending, the buyer can
-`expire` and take back everything — including payment for work already delivered and already
-agreed in doubly-signed States.**
-
-**A provider MUST therefore post a claim before that deadline, and MUST choose
-`responseWindowDaa` long enough to do so.** A provider that delivers for longer than the window
-without settling is not protected by holding signed States; it is holding evidence of a debt the
-chain will shortly release.
-
-The provider is not otherwise exposed. It holds a doubly-signed State it can post at any moment,
-and `seq > pendingSeq` is strict, so a stale claim can never overwrite a fresher one — the buyer's
-only move is to get there **first**, and only while nothing is pending. The requirement is a
-deadline, not a vigil.
-
-**This is not the problem a Lightning watchtower solves, and MUST NOT be answered the same way.**
-There, punishment is retrospective: an old state must be detected and answered with a justice
-transaction, using per-update revocation secrets, by a wallet that is offline by nature — hence
-delegation to a third party who must be trusted, can be bribed, and has to be paid. None of that
-shape appears here. The party at risk is a server, online because serving is its business; it
-needs only the latest State, which it already holds; there is no secret to store, no third party,
-and nothing to delegate. **An implementation MUST NOT introduce one.**
-
-Two settings bound the loss, and both are the provider's to choose:
-
-| Setting | Bounds |
-|---|---|
-| post before the UTXO reaches a chosen age | how long an unposted claim may sit |
-| post once unsettled value reaches a chosen amount | how much may accrue unposted |
-
-The second is the provider's counterpart to the babel: with it, the worst a buyer can take by
-waiting out the window is that amount. Without it, the bound is whatever the session can bill in
-the time allowed, which is a choice too — just an implicit one.
-
-**Each settle costs a transaction**, so a short window is safer and dearer. That trade is the
-provider's, and it should be made with the numbers rather than by default.
-
-### 7.4 Mutable covenant state is integers only
-
-There is a NUM2BIN size cap on `byte[32]` state writes in the current compiler. Mutable covenant
-state is therefore restricted to `seq` and `cumulativeSompi`, both integers. `partiesCommitment` is
-a **constructor constant**, which is a different mechanism and is unaffected. `prevState` lives in
-the off-chain message and is never written on-chain.
-
-### 7.4a Dust, and the three shapes a close may take
-
-Kaspa's KIP-9 prices an output by its reciprocal, and a transaction is refused when
-
-    10^12 / out_1  +  10^12 / out_2  -  10^12 / in   >  500,000
-
-The formula is the node's own, confirmed to within one sompi against a real rejection.
-
-**THE FLOOR IS NOT A CONSTANT, and treating it as one strands funds.** An output is priced by its
-reciprocal and the input's is subtracted, so what is payable depends on the OTHER output and on
-how much the covenant holds. 2,000,000 is only the limit a very large transaction approaches.
-`tools/dust-map.ts` walks every possible claim against the formula above and reports which of the
-three shapes below, if any, consensus would accept. Against a threshold of 2,000,000 there is an
-**unclosable window at every balance** -- claims for which the covenant demands an output the
-network will not create, and the whole balance is stranded:
-
-| Covenant holds | Claims with no legal close |
-|---|---|
-| 1 KAS | 2,000,000 .. 2,000,980 |
-| 0.5 KAS | 2,000,000 .. 2,004,044 |
-| 0.2 KAS | 2,000,000 .. 2,028,014 |
-| 0.1 KAS | 2,000,000 .. 2,146,692 |
-| 0.05 KAS | 2,000,000 .. 2,599,999 |
-
-**So the threshold is 2,600,000, and the fold threshold 3,000,000** -- measured as the smallest
-values that close the window at every balance §7.4b admits.
-
-That is not a pricing inconvenience; it decides whether a session can be closed. A close
-therefore has **exactly three legal shapes**, and an implementation MUST choose between them
-rather than always emitting two outputs:
-
-| Condition | Shape |
-|---|---|
-| `cumulativeSompi` < 2,600,000 | ONE output, everything to the **buyer**. Includes the no-claim case. |
-| refund < 2,600,000 | ONE output, everything to the **provider**. Requires `cumulativeSompi + 3,000,000 >= total`. |
-| both payable | TWO outputs: `cumulativeSompi` to the provider, the remainder to the buyer. |
-
-**Whichever side's share is dust, the other side takes the lot.** Dust cannot be paid to anyone,
-so folding it costs that party at most 0.02 KAS, and the alternative is locking the entire
-balance. A provider SHOULD still price a session so the ordinary two-output close is reachable,
-and MAY close cooperatively (§7.1) at any size, where an ordinary spend can pay whatever both
-parties agree.
-
-**The fold threshold is 2,400,000 rather than 2,000,000, and the difference is the fee.** The
-refund is `total - cumulativeSompi - fee`, so a bound of 2,000,000 would admit refunds only up to
-1,600,000 and leave everything between there and the dust floor with no legal shape at all --
-another way to lock the balance. Adding the fee allowance closes that gap exactly.
-
-This section is what a real session taught: three babels of ten words at 3,630 sompi earned
-108,900, the State settled on chain, and the close was then impossible. The same session now
-closes.
-
-### 7.5 What settlement does not promise
-
-A stale close that has already been **accepted** cannot be reversed by a later State. The response
-window is the entire protection. A party offline for its duration loses. This is the honest state
-of the art and matches Kurrent's stated non-claims; see §9.
-
----
-
-### 7.4b The funding floor
-
-**A buyer MUST fund the covenant with at least**
-
-    max( maxBabels x babelUnits x unitPriceSompi + closeFee , 10,000,000 sompi )
-
-**The second term is a SHAPE rule, not a dust rule.** A two-output close needs both halves to
-clear KIP-9 *together*, and for balances from 5,700,000 to 6,800,000 sompi they cannot -- at any
-split, and whatever the dust threshold is set to. `tools/dust-map.ts` walks balances in
-100,000-sompi steps and finds claims with no legal close at every balance in that band, and none
-at 6,850,000 or above. 10,000,000 is the next round number, and is what this rule requires.
-
-**and MUST NOT countersign a State whose `cumulativeSompi` exceeds what the covenant holds less
-that fee.**
-
-§7.2's `expire` pays the provider an output of **exactly** `pendingSompi`. If the parties have
-signed a total the covenant cannot cover -- including the fee for the very transaction that pays
-it -- then no valid close transaction exists, and the entire balance is stranded. It is Finding G
-again, reached by agreement rather than by dust.
-
-**The covenant cannot enforce this and no covenant could.** It would have to know the fee of a
-transaction that has not been built yet, which is not available to a script at validation time.
-The buyer can, because the buyer chooses the funding amount, and it can do so before spending
-anything at all. This is why the rule is normative on the buyer rather than a line of script.
-
----
+The window after which a channel can be refunded is the provider's deadline to claim, not merely
+the buyer's protection. Once a channel ages past its timeout with value vouched-but-unclaimed, the
+buyer may refund the whole balance -- including work already delivered and agreed. A provider that
+never claims eventually delivers for free. The kaspa-x402 escrow enforces this with an absolute
+timeout DAA score; a provider MUST claim before it, and MUST NOT delegate that obligation to a
+third party.
 
 ## 8. Checkpoints
 
@@ -788,7 +627,7 @@ because measured p90 latency is 1,879 ms.
 
 **Checkpoints are evidence, not safety.** They prove a State existed before a given block, which
 makes a stale close provable and attributable. They cannot prevent one: the covenant cannot recover
-a State from a digest, so it cannot enforce a minimum `seq`. Prevention is §7.2's job.
+a State from a digest, so it cannot enforce a minimum `seq`. Prevention is §3.1a (novelty) and the rail's per-seq voucher.
 
 ---
 

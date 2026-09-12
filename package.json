@@ -1,6 +1,6 @@
 {
   "name": "metered-protocol",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "A chunked, two-sided payment scheme for metered work, settled on Kaspa.",
   "type": "module",
   "exports": {
@@ -11,6 +11,10 @@
     "./chain": {
       "types": "./dist/tools/chain.d.ts",
       "import": "./dist/tools/chain.js"
+    },
+    "./rail": {
+      "types": "./dist/tools/rail.d.ts",
+      "import": "./dist/tools/rail.js"
     }
   },
   "types": "./dist/src/index.d.ts",
@@ -20,6 +24,7 @@
     "spec/SPEC.md",
     "spec/CONFORMANCE.md",
     "spec/conformance-vectors.json",
+    "docs/RAIL.md",
     "README.md",
     "LICENSE"
   ],
@@ -49,7 +54,9 @@
   "dependencies": {
     "@noble/curves": "^1.9.7",
     "@noble/hashes": "^1.8.0",
-    "gpt-tokenizer": "^4.0.0"
+    "gpt-tokenizer": "^4.0.0",
+    "@kaspa-x402/core": "0.1.0-alpha.10",
+    "@kaspa-x402/covenant": "0.1.0-alpha.10"
   },
   "devDependencies": {
     "@types/node": "^22.20.2",

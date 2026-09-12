@@ -17,6 +17,7 @@ import { newBiasState, observeResidual, biasAlarm, type BiasState } from '../bia
 import { toleranceBound } from '../reconcile.js';
 import type { Measurement, Offer, Reservation, State } from '../types.js';
 import type { Meter } from './provider.js';
+import { voucherForState, type Voucher } from '../rail/voucher.js';
 
 export class BuyerRefused extends Error {}
 
@@ -25,6 +26,7 @@ export class BuyerSession {
   private cumulativeUnits = 0;
   private cumulativeSompi = 0;
   private lastStateDigest: string | null = null;
+  private lastAgreed: State | null = null;
   private bias: BiasState = newBiasState();
 
   constructor(
@@ -51,6 +53,25 @@ export class BuyerSession {
 
   get spentSompi(): number {
     return this.cumulativeSompi;
+  }
+
+  /**
+   * The kaspa-x402 voucher for an agreed State, or null when this session is not on that rail.
+   *
+   * ONLY FOR A STATE THIS BUYER HAS COUNTERSIGNED. The voucher is what moves money, so it is
+   * produced from the buyer's own record of what it agreed, never from a State handed in from
+   * outside. `knownCeiling`, if the caller keeps one, must match what the Offer claims was vouched
+   * on this channel before -- a provider overstating that would have the buyer sign a higher
+   * ceiling than it owes.
+   */
+  vouch(knownCeiling?: number): Voucher | null {
+    const channel = this.offer.channel;
+    if (!channel) return null;
+    if (knownCeiling !== undefined && knownCeiling !== channel.vouchedSompi) {
+      throw new BuyerRefused(`the Offer says ${channel.vouchedSompi} was vouched on this channel; this buyer's record says ${knownCeiling}`);
+    }
+    if (!this.lastAgreed) throw new BuyerRefused('nothing has been countersigned yet, so there is nothing to vouch');
+    return voucherForState(this.lastAgreed, { network: this.offer.network, covenantId: channel.covenantId }, this.buyerSk, channel.vouchedSompi);
   }
 
   /** Authorise exactly one chunk. Never the session (SPEC.md 3.2). */
@@ -147,6 +168,7 @@ export class BuyerSession {
     this.cumulativeUnits = state.cumulativeUnits;
     this.cumulativeSompi = state.cumulativeSompi;
     this.lastStateDigest = digestHex(state);
+    this.lastAgreed = state;
     // SPEC.md 4, buyer side. The obligations are symmetric: a buyer that signs two States at one
     // seq has handed the provider a choice of which to settle, and it will not choose the cheaper.
     return signStateWithObligations(this.store, state, this.buyerSk);

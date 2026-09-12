@@ -17,6 +17,7 @@ import { acceptReservation, type BabelCursor } from '../reservation.js';
 import { reconcileBabel } from '../reconcile.js';
 import { newBiasState, observeResidual, biasAlarm, type BiasState } from '../bias.js';
 import type { Halt, Measurement, Offer, Reservation, State } from '../types.js';
+import { verifyVoucher, type Voucher } from '../rail/voucher.js';
 
 /** Counts the units in delivered content. Injected, because SPEC.md 6 makes it the Offer's choice. */
 export type Meter = (content: Uint8Array) => number;
@@ -40,6 +41,15 @@ export class SessionRejected extends Error {
   }
 }
 
+/**
+ * A countersignature arrived without the voucher that has to travel with it (docs/RAIL.md).
+ *
+ * Neither a halt nor an authentication failure: the buyer has agreed the number and not yet
+ * authorised the money, and the remedy is for it to send the voucher, not for the session to
+ * stop. Until it does, no further babel is delivered.
+ */
+export class VoucherRequired extends Error {}
+
 interface Pending {
   seq: number;
   content: Uint8Array;
@@ -62,6 +72,9 @@ export interface SessionSnapshot {
   lastStateDigest: string | null;
   bias: BiasState;
   settled: [string, { state: State; providerSig: string; billedUnits: number }][];
+  /** The rail's state, if the session is on it: how far it is vouched, and the voucher to claim with. */
+  vouchedThroughSeq?: number;
+  lastVoucher?: Voucher | null;
 }
 
 export class ProviderSession {
@@ -71,6 +84,9 @@ export class ProviderSession {
   private lastStateDigest: string | null = null;
 
   private lastState: State | null = null;
+  /** The seq of the last State whose voucher this session holds. -1 before any. */
+  private vouchedThroughSeq = -1;
+  private lastVoucher: Voucher | null = null;
 
   /**
    * Settled results by the buyer's `measurementId`, so SPEC.md 3.3's idempotency rule holds.
@@ -104,6 +120,8 @@ export class ProviderSession {
       lastStateDigest: this.lastStateDigest,
       bias: this.bias,
       settled: [...this.settled.entries()],
+      vouchedThroughSeq: this.vouchedThroughSeq,
+      lastVoucher: this.lastVoucher,
     };
   }
 
@@ -122,6 +140,8 @@ export class ProviderSession {
     session.bias = snap.bias;
     session.pending = snap.pending ? { ...snap.pending, content: EMPTY } : null;
     for (const [id, result] of snap.settled) session.settled.set(id, result);
+    session.vouchedThroughSeq = snap.vouchedThroughSeq ?? -1;
+    session.lastVoucher = snap.lastVoucher ?? null;
     return session;
   }
 
@@ -138,6 +158,13 @@ export class ProviderSession {
    */
   chunk(reservation: Reservation, prompt: string): { content: Uint8Array; measurement: Measurement } {
     acceptReservation(this.offer, reservation, this.cursor);
+    // ON THE RAIL, NOTHING IS DELIVERED AGAINST AN UNVOUCHED STATE. The State and the voucher are
+    // two signatures and only the voucher moves money; a buyer that signed the last State and
+    // withheld its voucher holds a debt this provider cannot claim. So the previous babel must be
+    // vouched before this one is served, which keeps the provider's exposure at exactly one babel.
+    if (this.offer.channel && this.cursor && this.vouchedThroughSeq < this.cursor.seq) {
+      throw new VoucherRequired(`babel ${this.cursor.seq} was countersigned but never vouched; send its voucher before asking for ${reservation.seq}`);
+    }
 
     const content = this.deliver(prompt, reservation.units);
     const units = this.meter(content);
@@ -238,9 +265,35 @@ export class ProviderSession {
    * measured p90 confirmation at 1,879 ms, and a session that stalled two seconds every few chunks
    * would be unusable for a streamed response.
    */
-  chainTo(digest: string): void {
+  chainTo(digest: string, voucher?: Voucher): void {
     this.lastStateDigest = digest;
     if (this.cursor) this.cursor = { ...this.cursor, stateDigest: digest };
     if (this.checkpointer && this.lastState) this.checkpointer.record(this.offer, this.lastState);
+    if (this.offer.channel) this.acceptVoucher(voucher);
+  }
+
+  /** The voucher covering the latest agreed State -- what the provider claims with. */
+  voucher(): Voucher | null {
+    return this.lastVoucher;
+  }
+
+  /**
+   * The voucher must be the buyer's, for this channel, for exactly the ceiling this State brings
+   * the channel to. A voucher for less is a buyer paying less than it agreed; for more, a buyer
+   * overpaying, which the provider must not accept either -- it would be claiming money the State
+   * does not justify.
+   */
+  private acceptVoucher(voucher: Voucher | undefined): void {
+    const channel = this.offer.channel;
+    const state = this.lastState;
+    if (!channel || !state) return;
+    if (!voucher) throw new VoucherRequired(`State ${state.seq} needs a voucher for ${channel.vouchedSompi + state.cumulativeSompi}`);
+    const expected = String(channel.vouchedSompi + state.cumulativeSompi);
+    if (voucher.amount !== expected) throw new VoucherRequired(`voucher is for ${voucher.amount}; State ${state.seq} calls for ${expected}`);
+    if (!verifyVoucher(voucher, { network: this.offer.network, covenantId: channel.covenantId }, this.offer.buyerPubkey)) {
+      throw new VoucherRequired('the voucher does not verify against the buyer for this channel');
+    }
+    this.vouchedThroughSeq = state.seq;
+    this.lastVoucher = voucher;
   }
 }

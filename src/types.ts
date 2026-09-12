@@ -24,7 +24,30 @@ export interface Offer {
   buyerPubkey: string;
   providerPubkey: string;
   partiesCommitment: string;
+  /**
+   * The kaspa-x402 escrow channel this session settles through, when it settles on that rail.
+   *
+   * `covenantId` is the channel's stable KIP-20 lineage; `vouchedSompi` is the lifetime ceiling
+   * the buyer has already signed on it before this session, so each State's voucher is for
+   * `vouchedSompi + cumulativeSompi`. Absent for a session that is not settling through a channel.
+   * See docs/RAIL.md.
+   */
+  channel?: { covenantId: string; vouchedSompi: number };
   sig?: string;
+}
+
+/**
+ * What a buyer tells a provider when it wants a session billed against a kaspa-x402 channel it has
+ * already opened. Everything the provider needs to rebuild the escrow script and find the UTXO:
+ * the parties are known, so this is the rest of the template plus where the money is.
+ */
+export interface ChannelProposal {
+  covenantId: string;
+  /** Absolute DAA score the escrow refunds after -- their `timeoutDaa`, verbatim. */
+  timeoutDaa: number;
+  /** The covenant's current settled total, which the script embeds. 0 for a fresh channel. */
+  settledTotal: number;
+  active: { txid: string; index: number; amount: number; scriptPublicKey: string };
 }
 
 /** SPEC.md §3.2. The buyer's authorisation for ONE chunk. Never for the session. */

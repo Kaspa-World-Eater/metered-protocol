@@ -41,6 +41,15 @@ function checkBounds(offer: Offer): void {
     reject(`toleranceAbs must be >= ${floor} for meter ${offer.meter} -- see SPEC.md 6`);
   }
   if (offer.checkpointEvery < 0) reject('checkpointEvery must be >= 0');
+  if (offer.channel !== undefined) {
+    // A session on the kaspa-x402 rail names its channel here (docs/RAIL.md). The shape is
+    // checked because a voucher will be signed against these two values, and a malformed one is
+    // a voucher for nothing.
+    if (!/^[0-9a-f]{64}$/.test(offer.channel.covenantId)) reject('channel.covenantId must be 32 hex bytes');
+    if (!Number.isSafeInteger(offer.channel.vouchedSompi) || offer.channel.vouchedSompi < 0) {
+      reject('channel.vouchedSompi must be a whole, non-negative number');
+    }
+  }
 }
 
 /**

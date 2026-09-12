@@ -13,10 +13,12 @@
  */
 import { createServer, type IncomingMessage, type ServerResponse, type Server } from 'node:http';
 import { digestHex, verifyState } from '../encoding.js';
-import { SessionRejected } from './provider.js';
 import { ReservationUnauthenticated } from '../reservation.js';
-import { MeteredService } from './service.js';
+import { MeteredService, ChannelRefused } from './service.js';
+import type { ChannelProposal } from '../types.js';
 import { toPaymentRequired, errorBody, toBase64, type ChunkRequest, type StateRequest } from './protocol.js';
+import { SessionRejected, VoucherRequired } from './provider.js';
+import type { Voucher } from '../rail/voucher.js';
 
 type Reply = (code: number, body: unknown) => void;
 
@@ -68,10 +70,18 @@ export interface ServeOptions {
 const NO_SESSION = ['no such session', 'unknown, halted or evicted'] as const;
 
 async function handleOpen(svc: MeteredService, req: IncomingMessage, reply: Reply, resource: string): Promise<void> {
-  const body = await readJson<{ buyerPubkey?: string }>(req);
+  const body = await readJson<{ buyerPubkey?: string; channel?: ChannelProposal }>(req);
   if (!body.buyerPubkey) return reply(400, errorBody('open requires buyerPubkey'));
-  // The 402 IS the answer here, not an error: it carries the terms.
-  return reply(402, toPaymentRequired(svc.open(body.buyerPubkey), resource, 'metered session available'));
+  try {
+    // With a channel proposed, the provider verifies it before naming it in the Offer (SPEC.md
+    // 3.5). Without one, the session is off the rail and settles however the parties arranged.
+    const offer = body.channel ? await svc.openOnChannel(body.buyerPubkey, body.channel) : svc.open(body.buyerPubkey);
+    // The 402 IS the answer here, not an error: it carries the terms.
+    return reply(402, toPaymentRequired(offer, resource, 'metered session available'));
+  } catch (err) {
+    if (err instanceof ChannelRefused) return reply(400, errorBody('channel refused', err.message));
+    throw err;
+  }
 }
 
 /**
@@ -101,6 +111,9 @@ async function handleBabel(svc: MeteredService, req: IncomingMessage, reply: Rep
     return reply(200, { contentB64: toBase64(content), measurement });
   } catch (err) {
     if (isUnauthenticated(err)) return reply(403, errorBody('rejected', String(err)));
+    // Not a halt either: the buyer agreed the last State and has not yet authorised paying it.
+    // The remedy is a voucher, and the session waits for one rather than ending (docs/RAIL.md).
+    if (err instanceof VoucherRequired) return reply(400, errorBody('voucher required', err.message));
     svc.halt(id);
     throw err;
   }
@@ -124,7 +137,7 @@ async function handleState(svc: MeteredService, req: IncomingMessage, reply: Rep
 }
 
 async function handleCountersign(svc: MeteredService, req: IncomingMessage, reply: Reply): Promise<void> {
-  const body = await readJson<{ state: { sessionId?: string }; buyerSig: string }>(req);
+  const body = await readJson<{ state: { sessionId?: string }; buyerSig: string; voucher?: Voucher }>(req);
   const id = body.state?.sessionId;
   const session = id ? svc.get(id) : undefined;
   const offer = id ? svc.offerFor(id) : undefined;
@@ -134,7 +147,14 @@ async function handleCountersign(svc: MeteredService, req: IncomingMessage, repl
     // evidence about the sender and none at all about the session. See isUnauthenticated above.
     return reply(403, errorBody('the buyer signature does not verify'));
   }
-  session.chainTo(digestHex(body.state));
+  try {
+    session.chainTo(digestHex(body.state), body.voucher);
+  } catch (err) {
+    // The number is agreed and the money is not yet authorised. The buyer can fix that by sending
+    // the voucher; nothing about the session has to stop. See VoucherRequired.
+    if (err instanceof VoucherRequired) return reply(400, errorBody('voucher required', err.message));
+    throw err;
+  }
   svc.persist(id);
   return reply(200, { chained: digestHex(body.state) });
 }
@@ -166,6 +186,9 @@ export function meteredHandler(opts: ServeOptions) {
         return reply(409, errorBody('session halted', err.message));
       }
       if (err instanceof BodyTooLarge) return reply(413, errorBody('request too large', err.message));
+      // A babel asked for before the last one was vouched. Not a halt: the buyer sends the voucher
+      // and asks again.
+      if (err instanceof VoucherRequired) return reply(400, errorBody('voucher required', err.message));
       return reply(400, errorBody('bad request', err instanceof Error ? err.message : String(err)));
     }
   };

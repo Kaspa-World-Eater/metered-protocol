@@ -26,10 +26,13 @@ import { ProviderSession, type Deliver, type Meter } from './provider.js';
 import { Checkpointer, type Anchor } from '../checkpoint.js';
 import { memoryStore, type SignerStore } from '../signer.js';
 import type { SessionStore } from '../store.js';
-import type { Offer } from '../types.js';
+import type { ChannelProposal, Offer } from '../types.js';
 
 /** Everything about an Offer except who the buyer is, which is not known until one asks. */
 export type OfferTerms = Omit<Offer, 'sessionId' | 'buyerPubkey' | 'partiesCommitment' | 'sig' | 'providerPubkey'>;
+
+/** A buyer proposed a channel the provider will not bill against. A refusal, not a halt. */
+export class ChannelRefused extends Error {}
 
 export interface ServiceOptions {
   terms: OfferTerms;
@@ -37,6 +40,13 @@ export interface ServiceOptions {
   providerPubkey: string;
   meter: Meter;
   deliver: Deliver;
+  /**
+   * Decide whether a channel a buyer proposes is real and adequate, and what ceiling the buyer
+   * has already vouched on it (SPEC.md 3.5). INJECTED, because deciding means looking at the
+   * chain and this package does not. Return null to refuse. Absent, every proposal is refused --
+   * a provider that cannot verify a channel must not bill against one.
+   */
+  channelFor?: ((buyerPubkey: string, proposal: ChannelProposal) => Promise<{ covenantId: string; vouchedSompi: number } | null>) | undefined;
   /** How many sessions to keep. The oldest is evicted past this, halted ones first. */
   maxSessions?: number | undefined;
   /**
@@ -84,6 +94,24 @@ export class MeteredService {
 
   /** Mint a session for one buyer and return its signed Offer. */
   open(buyerPubkey: string): Offer {
+    return this.mint(buyerPubkey, undefined);
+  }
+
+  /**
+   * Open a session billed against a channel the buyer already holds with this provider.
+   *
+   * The proposal is the buyer's word; `channelFor` is the provider's check. Only what the check
+   * returns goes into the Offer, so a buyer cannot name a ceiling or a lineage the provider did
+   * not itself confirm.
+   */
+  async openOnChannel(buyerPubkey: string, proposal: ChannelProposal): Promise<Offer> {
+    if (!this.opts.channelFor) throw new ChannelRefused('this provider does not bill against channels');
+    const channel = await this.opts.channelFor(buyerPubkey.toLowerCase(), proposal);
+    if (!channel) throw new ChannelRefused('the proposed channel was not accepted');
+    return this.mint(buyerPubkey, channel);
+  }
+
+  private mint(buyerPubkey: string, channel: Offer['channel']): Offer {
     if (!/^[0-9a-f]{64}$/i.test(buyerPubkey)) throw new Error('buyerPubkey must be 32 hex bytes');
     this.evict();
 
@@ -96,6 +124,7 @@ export class MeteredService {
         buyerPubkey: buyerPubkey.toLowerCase(),
         providerPubkey: this.opts.providerPubkey,
         partiesCommitment: parties,
+        ...(channel ? { channel } : {}),
       } as Offer,
       this.opts.providerSk,
     ) as Offer;

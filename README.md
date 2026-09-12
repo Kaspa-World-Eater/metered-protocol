@@ -7,8 +7,9 @@ seller reporting what it used, against a cap the buyer set in advance — the bu
 anything, and for a fifth of a cent, disputing it is not worth anyone's time.
 
 `metered` replaces the invoice with an agreement. The buyer authorises one slice at a time, both
-sides count what was actually delivered, and a small program on Kaspa releases the money whether or
-not either party cooperates at the end.
+sides count what was actually delivered, and the agreed amount settles through the
+[Kaspa x402](https://kaspa-x402.org) `batch-settlement` escrow — metered decides the number, that
+rail moves the money. It adds no covenant of its own.
 
 **The buyer counts what it was given — not what it was told about.** Everything else here is
 bookkeeping around that sentence.
@@ -45,15 +46,16 @@ Neither party is trusted for anything. The arithmetic does not leave room.
 | `spec/worked-example.txt` | a complete session, generated, with real signatures |
 | `src/` | reference implementation, TypeScript |
 | `impl-py/` | a second implementation, Python, written from the specification alone |
-| `contracts/` | the covenant, twice: hand-written SilverScript and an Argent port |
+| `src/rail/`, `tools/rail-*` | settlement on the Kaspa x402 escrow — the glue, not a covenant of our own |
+| `contracts/` | a self-contained covenant from versions ≤ 1.x, kept for reference (see HANDOFF.md) — no longer the settlement path |
 | `evidence/` | the measurements behind every number in the specification |
-| `tools/` | chain tooling — settle, close, anchor, and an end-to-end demo |
+| `HANDOFF.md` | what this is, for the Kaspa x402 maintainers |
 
 ## Verifying it yourself
 
 ```bash
 npm install
-npm test                 # 193 tests
+npm test                 # 212 tests
 npm run conformance      # regenerate the vectors
 npm run conformance:py   # the second implementation, against the same file
 ```
@@ -62,31 +64,30 @@ npm run conformance:py   # the second implementation, against the same file
 verification from the BIP rather than importing it, so the two agree on the specification rather
 than on a shared library. All 69 assertions pass.
 
-The covenant suites need [SilverScript](https://github.com/kaspanet/silverscript) and a patched
-debugger; the chain tooling additionally needs a rusty-kaspa WASM build (`METERED_KASPA_SDK`) and a
-funded key. Neither is required to read the specification or run the conformance vectors.
+Settlement (`metered-protocol/rail`) needs a rusty-kaspa WASM build (`METERED_KASPA_SDK`) and a
+funded key; it depends on `@kaspa-x402/core` and `@kaspa-x402/covenant` and reimplements neither.
+Neither is required to read the specification or run the conformance vectors.
 
 ## Status
 
-Both covenants and the full session flow run on **Kaspa testnet-10**. The protocol has not been
-deployed to mainnet: SilverScript is unaudited and Argent is pre-release, and the covenant holds
-funds.
+A metering session settles through the Kaspa x402 escrow on **testnet-10**, end to end. Not on
+mainnet: that escrow is alpha and unaudited for mainnet funds.
 
 What has been exercised end to end:
 
-- A language model metered through a complete session and settled on chain, with the model's own
-  usage figure, the seller's count and the buyer's count agreeing exactly.
-- Both covenants executing under consensus — a claim posted, a stale claim refused by the network,
-  a newer claim superseding it, the balance split between the parties, and a full refund where no
-  claim was made.
+- A metering session settled through the `batch-settlement` escrow — channel opened, each babel
+  vouchered with its countersignature, the seller claiming the agreed total, the buyer refunding
+  the rest, and the node's transaction ids matching the reference artifacts' required ids.
+- A seller that under-delivered proven unable to claim the reservation — refused by the builder,
+  the lane accounting, and the escrow script.
 - Two implementations agreeing on every conformance vector.
 - The tokeniser pinned across languages, token boundary by token boundary, against Python
   `tiktoken` over mixed scripts, emoji, combining marks and pathological whitespace.
 - Two different units settled through the same unchanged protocol — tokens and delivered bytes —
   which is what distinguishes a unit-agnostic design from one that merely uses abstract field names.
 
-Figures: the covenant is **504 bytes** of a 520-byte script limit; a State is **72 bytes** signed;
-a checkpoint costs **0.002 KAS**; the response window is **600 blocks, about 60 seconds** at the
+Figures: a State is **72 bytes** signed; a checkpoint costs **0.002 KAS**; the response window is
+**600 blocks, about 60 seconds** at the
 roughly 10 blocks per second Kaspa produces. The same 600-block window is over four days at
 ten-minute block times, which is why the settlement layer is a blockDAG.
 
