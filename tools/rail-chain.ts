@@ -217,10 +217,19 @@ export async function refundChannel(
  *
  * The buyer's word is the proposal; this is what makes it true or not. The escrow script is
  * REBUILT from the parties and the proposed terms, so a proposal whose script does not match is
- * refused before the chain is asked anything; then the UTXO must exist at that outpoint, for
- * that amount, under that covenant id; and what it holds beyond the settled total must cover the
- * most this session could bill. `vouchedSompi` is reported as the settled total, the floor the
- * chain already knows -- a provider keeping its own record of vouchers may report higher.
+ * refused before the chain is asked anything; then the proposal must not already be past its
+ * refund timeout, since an expired channel is the buyer's to reclaim at any moment; then the UTXO
+ * must exist at that outpoint, for that amount, under that covenant id; and what it holds must
+ * cover the most this session could bill. `vouchedSompi` is reported as the settled total, the
+ * floor the chain already knows -- a provider keeping its own record of vouchers may report
+ * higher.
+ *
+ * `active.amount` is already what the escrow holds NOW -- `claimChannel` sets it to the
+ * continuation UTXO's value, which has every prior claim's `claimSompi` subtracted out already
+ * (see the `active:` assignment there). `settledTotal` grows by that same amount, so
+ * `active.amount` and `escrowSompi - settledTotal` are the same number from genesis onward.
+ * Subtracting `settledTotal` from `active.amount` here would subtract it twice, understating what
+ * the channel actually holds and refusing a continuation that is genuinely funded.
  */
 export function channelVerifier(
   rpc: Any, sdk: Any, providerPubkey: string, network: Network, requiredSompi: number,
@@ -229,7 +238,10 @@ export function channelVerifier(
     const shape = { buyerPubkey, providerPubkey, theirNetwork: theirNetwork(network), timeoutDaa: BigInt(proposal.timeoutDaa) };
     const expected = serializedScriptPublicKey(escrowV2ScriptPublicKey(escrowParams(shape, BigInt(proposal.settledTotal))));
     if (expected.toLowerCase() !== proposal.active.scriptPublicKey.toLowerCase()) return null;
-    if (proposal.active.amount - proposal.settledTotal < requiredSompi) return null;
+    if (proposal.active.amount < requiredSompi) return null;
+
+    const virtualDaaScore = BigInt((await rpc.getBlockDagInfo()).virtualDaaScore);
+    if (virtualDaaScore >= BigInt(proposal.timeoutDaa)) return null;
 
     const address = sdk.addressFromScriptPublicKey(new sdk.ScriptPublicKey(0, expected.slice(4)), new sdk.NetworkId(network)).toString();
     const { entries } = await rpc.getUtxosByAddresses([address]);
@@ -238,6 +250,14 @@ export function channelVerifier(
       && Number(e.outpoint.index) === proposal.active.index
       && BigInt(e.amount) === BigInt(proposal.active.amount));
     if (!live) return null;
+    // Best-effort: the WASM SDK's UTXO entries may carry the covenant id they're bound to
+    // (`entry.covenantId`, mirroring `TxV1ReferenceInput.utxo.covenantId` in the reference
+    // artifacts `@kaspa-x402/covenant` builds). When it's there, a live UTXO under the RIGHT
+    // script but the WRONG lineage is refused rather than trusted on the buyer's say-so; when the
+    // binding isn't exposed this check is skipped rather than made a hard dependency on a field
+    // this repo cannot verify without the real SDK.
+    const liveCovenantId = live.covenantId ?? live.covenant_id;
+    if (liveCovenantId != null && String(liveCovenantId).toLowerCase() !== proposal.covenantId.toLowerCase()) return null;
     return { covenantId: proposal.covenantId, vouchedSompi: proposal.settledTotal };
   };
 }

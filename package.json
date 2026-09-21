@@ -35,9 +35,9 @@
   "scripts": {
     "build": "node build.mjs",
     "prepublishOnly": "npm run build && npm test",
-    "test": "node --import tsx --test \"src/**/*.test.ts\"",
+    "test": "node --import tsx --test \"src/**/*.test.ts\" \"tools/**/*.test.ts\"",
     "conformance": "tsx tools/conformance.ts",
-    "conformance:py": "python impl-py/conformance.py",
+    "conformance:py": "python3 impl-py/conformance.py",
     "vectors": "tsx spec/vectors.ts > spec/worked-example.txt",
     "contracts": "tsx tools/contracts.ts",
     "contracts:ag": "tsx tools/contracts.ts --profile ag",
