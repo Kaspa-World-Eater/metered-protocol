@@ -25,6 +25,7 @@
     "spec/CONFORMANCE.md",
     "spec/conformance-vectors.json",
     "docs/RAIL.md",
+    "docs/proofs",
     "README.md",
     "LICENSE"
   ],
