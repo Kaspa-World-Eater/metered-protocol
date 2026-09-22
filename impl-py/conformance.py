@@ -1,7 +1,10 @@
 """
 Run spec/conformance-vectors.json against the Python implementation.
 
-    python impl-py/conformance.py
+    python3 impl-py/conformance.py
+
+Needs Python 3.10+ (the implementation uses the `X | Y` union syntax) and the dependency pinned in
+impl-py/requirements.txt.
 
 This is what a second implementation is FOR. It shares no code with the TypeScript, was written
 from the specification, and either produces the same bytes or it does not.

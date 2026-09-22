@@ -62,7 +62,8 @@ npm run conformance:py   # the second implementation, against the same file
 
 `impl-py/` shares no code with `src/`. It was written from `spec/SPEC.md` and implements BIP340
 verification from the BIP rather than importing it, so the two agree on the specification rather
-than on a shared library. All 69 assertions pass.
+than on a shared library. All 69 assertions pass. It needs Python 3.10+ and the dependency pinned
+in `impl-py/requirements.txt` (`pip install -r impl-py/requirements.txt`).
 
 Settlement (`metered-protocol/rail`) needs a rusty-kaspa WASM build (`METERED_KASPA_SDK`) and a
 funded key; it depends on `@kaspa-x402/core` and `@kaspa-x402/covenant` and reimplements neither.
