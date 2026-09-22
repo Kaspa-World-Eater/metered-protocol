@@ -76,8 +76,9 @@ Two rules close that, and both are the integration's, not theirs:
 Implemented as SPEC §3.5: the Offer carries `channel: { covenantId, vouchedSompi }`; the countersign
 carries the voucher; the provider verifies it on arrival, holds it, and refuses the next babel
 without it. A missing or wrong voucher is a 400 with the reason, not a halt -- the session resumes
-when the voucher arrives. Proven live on testnet-10 (genesis `21b0f971…`, claim `338ff973…`) with
-the provider claiming the voucher it received on the wire, not one derived out of band.
+when the voucher arrives. Proven live on testnet-10 (2026-09-22: genesis [`266fe312667f3ab682146f7da339b3e8398c2ee8fc85b8ff6c9a0d2096aded03`](https://explorer-tn10.kaspa.org/txs/266fe312667f3ab682146f7da339b3e8398c2ee8fc85b8ff6c9a0d2096aded03),
+claim [`d9f499a373603b4c7eb3c9717cb8602156d8e1ada57e707381488f8162e13aca`](https://explorer-tn10.kaspa.org/txs/d9f499a373603b4c7eb3c9717cb8602156d8e1ada57e707381488f8162e13aca)) with the provider claiming the voucher it received on the wire, not one derived
+out of band.
 
 ### One channel per buyer–seller pair, many sessions
 
@@ -107,18 +108,23 @@ x402 client declining `scheme: "metered"` is correct behaviour for a scheme it d
 ## Order of work
 
 1. ✅ `voucherForState()` — their digest, byte for byte, from both their packages. `src/rail/voucher.ts`.
-2. ✅ **Live on testnet-10 (2026-09-12):** carve `e019a14b…`, their genesis `64ee2bfa…`
-   (covenantId `2b56e59d…`), a 4-babel session agreeing 4,587,520 sompi, their claim `1f00e92a…`
+2. ✅ **Live on testnet-10** (first 2026-09-12; re-run 2026-09-22, the run every id below is from):
+   carve [`61fa0169ee0634d5a5b63af4b1400a20de62c1873b06287108bb47abff7074cb`](https://explorer-tn10.kaspa.org/txs/61fa0169ee0634d5a5b63af4b1400a20de62c1873b06287108bb47abff7074cb),
+   their genesis [`266fe312667f3ab682146f7da339b3e8398c2ee8fc85b8ff6c9a0d2096aded03`](https://explorer-tn10.kaspa.org/txs/266fe312667f3ab682146f7da339b3e8398c2ee8fc85b8ff6c9a0d2096aded03)
+   (covenantId `088058206a60dfed2290b46a718f78425b3bd8916c546ec8da65055088fb0ef4`), a 4-babel session agreeing 4,587,520 sompi,
+   their claim [`d9f499a373603b4c7eb3c9717cb8602156d8e1ada57e707381488f8162e13aca`](https://explorer-tn10.kaspa.org/txs/d9f499a373603b4c7eb3c9717cb8602156d8e1ada57e707381488f8162e13aca)
    paying the seller 4,087,520 and continuing the escrow at settledTotal 4,587,520. The node's
    transaction ids matched their artifacts' exactly. `tools/rail-chain.ts`, `tools/rail-live.ts`.
 3. ✅ A seller cannot claim the reservation: refused by their builder, by their accounting, and by
    the script (`claimAmount <= totalAuthorized - settledTotal` under a voucher signature the buyer
    never gave). `src/rail/ceiling.test.ts`.
-4. ✅ The voucher travels with the countersignature; the seller waits for it. SPEC §3.5. Live: `21b0f971…` → `338ff973…`.
+4. ✅ The voucher travels with the countersignature; the seller waits for it. SPEC §3.5. Live: the
+   genesis → claim above.
 5. Retire §7 and its tooling from the reference implementation; update SPEC and the public tree;
    publish 2.0.0, since a section leaves.
-6. ✅ Refund, and the full lifecycle live: genesis (covenantId `21203038…`) → four vouched babels →
-   claim `da68ff07…` → refund `8db4d3c8…`, 14,912,480 sompi back to the buyer after the timeout.
+6. ✅ Refund, and the full lifecycle live: genesis (covenantId `088058206a60dfed2290b46a718f78425b3bd8916c546ec8da65055088fb0ef4`) → four vouched babels →
+   claim → refund [`33ed179a05cdeb71e73e8790459c2f67b277a103f509f06a0e6213f6c56ccc48`](https://explorer-tn10.kaspa.org/txs/33ed179a05cdeb71e73e8790459c2f67b277a103f509f06a0e6213f6c56ccc48),
+   14,912,480 sompi back to the buyer after the timeout.
    **Found on the way: their `timeoutDaa` is an ABSOLUTE DAA score** (`require(tx.time >= timeout)`),
    computed as virtual-DAA-at-opening plus the window. The first three channels passed a window as
    if it were absolute, putting the timeout in the past and leaving the buyer free to refund
@@ -127,6 +133,21 @@ x402 client declining `scheme: "metered"` is correct behaviour for a scheme it d
    moment a channel exists -- the smallest honest version of their `ChannelStore` contract.
 7. Talk to kaspa-x402.org. They found this project first; the conversation is "our scheme runs on
    your escrow, here is the evidence" — with three transaction ids attached.
+
+### Proofs
+
+Every transaction id in this document is 64 hex characters with an explorer link. The three that
+go through their builders -- genesis, claim, refund -- also have a matching `docs/proofs/<txid>.json`:
+the reference transaction itself (its hash IS the id, recomputable with `@kaspa-x402/covenant`),
+the network, which builder made it, the node's virtual DAA score at submission, and the time.
+`tools/rail-sdk.ts` writes it the moment the node confirms the id, before anything else happens.
+The carve is an ordinary P2PK spend from the buyer's wallet and is linked, not archived.
+
+That file exists because the first run's ids did not survive. The 2026-09-12 lifecycle was real,
+but by 2026-09-22 every one of its ids returned 404 from `api-tn10.kaspa.org` — the public index
+does not reach back that far — and an id nobody can fetch is the author's word, not a pin
+(kaspanet/kccs#29 review). So the lifecycle was re-run on 2026-09-22 with the archive in place,
+and those are the ids cited here. `src/proof.ts` refuses to write anything but a whole id.
 
 ## Caveats, stated once
 

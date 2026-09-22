@@ -17,7 +17,8 @@ import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 
-export type Network = 'testnet-10' | 'testnet-11' | 'mainnet';
+export type { Network } from '../src/proof.js';
+import type { Network } from '../src/proof.js';
 
 /**
  * The rusty-kaspa WASM bindings, which are NOT vendored here: 12 MB of WASM with its own release

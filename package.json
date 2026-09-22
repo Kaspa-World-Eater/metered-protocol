@@ -1,6 +1,6 @@
 {
   "name": "metered-protocol",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A chunked, two-sided payment scheme for metered work, settled on Kaspa.",
   "type": "module",
   "exports": {

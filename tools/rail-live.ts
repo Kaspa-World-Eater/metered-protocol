@@ -28,6 +28,7 @@ import { openSession, runBabel } from '../src/http/client.js';
 import type { Voucher } from '../src/rail/voucher.js';
 import { loadSdk, loadAnchorKey } from './kaspa.js';
 import { awaitUtxo, type Any } from './live-steps.js';
+import { spendWallet } from './wallet.js';
 import { openChannel, claimChannel, refundChannel, type Channel } from './rail-chain.js';
 import type { State } from '../src/types.js';
 
@@ -35,7 +36,6 @@ const NETWORK = 'testnet-10' as const;
 const ESCROW = 20_000_000n;
 const GENESIS_FEE = 500_000n;
 const CLAIM_FEE = 500_000n;
-const CARVE_FEE = 250_000n;
 // The channel's refund window, in DAA blocks past opening -- about six seconds at ten blocks a
 // second, short enough that the refund can be proven in the same run. The protocol's own
 // responseWindowDaa is a separate number and stays at 600.
@@ -68,21 +68,12 @@ function remember(channel: Channel, providerSk: string): void {
 
 /** Their genesis wants one input of exactly escrow + fee. Ordinary wallets do not hold that, so make it. */
 async function carve(rpc: Any, sdk: Any, sk: string, amount: bigint): Promise<{ txid: string; index: number; amount: bigint }> {
-  const networkId = new sdk.NetworkId(NETWORK);
   const priv = new sdk.PrivateKey(sk);
-  const from = priv.toKeypair().toAddress(networkId).toString();
-  const { entries } = await rpc.getUtxosByAddresses([from]);
-  const src = entries.reduce((a: Any, b: Any) => (b.amount > a.amount ? b : a));
-  if (src.amount < amount + CARVE_FEE) throw new Error(`largest UTXO ${src.amount} cannot carve ${amount}`);
-  const tx = sdk.createTransaction([src], [{ address: from, amount }, { address: from, amount: src.amount - amount - CARVE_FEE }], 0n, undefined, 0);
-  tx.version = 1;
-  tx.gas = 0n;
-  for (const i of tx.inputs) { i.sigOpCount = 0; i.computeBudget = 10; }
-  tx.finalize();
-  const { transactionId } = await rpc.submitTransaction({ transaction: sdk.signTransaction(tx, [priv], true), allowOrphan: false });
+  const from = priv.toKeypair().toAddress(new sdk.NetworkId(NETWORK)).toString();
+  const { txid } = await spendWallet(rpc, sdk, sk, NETWORK, [{ address: from, amount }]);
   const landed = await awaitUtxo(rpc, from, amount);
   if (!landed) throw new Error('the carved UTXO never appeared');
-  return { txid: String(transactionId), index: Number(landed.outpoint.index), amount };
+  return { txid, index: Number(landed.outpoint.index), amount };
 }
 
 /** A real metered session over HTTP, returning the final agreed State and the provider's signature. */

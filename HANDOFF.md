@@ -52,14 +52,15 @@ the voucher for the last State. The seller's exposure stays at exactly one babel
 ## Evidence (testnet-10)
 
 A metering session settled through your escrow, end to end, with the node's transaction ids
-matching your artifacts' required ids at every step:
+matching your artifacts' required ids at every step (testnet-10, 2026-09-22; each id links to the
+explorer, and `docs/proofs/<txid>.json` holds the reference transaction itself):
 
 | Step | Transaction |
 |---|---|
-| channel genesis (`batch-genesis`) | `21203038…` covenantId, `21b0f971…` an earlier run |
+| channel genesis (`batch-genesis`) | [`266fe312667f3ab682146f7da339b3e8398c2ee8fc85b8ff6c9a0d2096aded03`](https://explorer-tn10.kaspa.org/txs/266fe312667f3ab682146f7da339b3e8398c2ee8fc85b8ff6c9a0d2096aded03) — covenantId `088058206a60dfed2290b46a718f78425b3bd8916c546ec8da65055088fb0ef4` |
 | 4 babels, both sides counting | 4,587,520 sompi agreed of 5,242,880 reserved |
-| claim (`batch-claim`) | `338ff973…` / `da68ff07…` — seller paid the agreed total less fee |
-| refund (`batch-refund`) | `8db4d3c8…` — remainder to the buyer after the timeout |
+| claim (`batch-claim`) | [`d9f499a373603b4c7eb3c9717cb8602156d8e1ada57e707381488f8162e13aca`](https://explorer-tn10.kaspa.org/txs/d9f499a373603b4c7eb3c9717cb8602156d8e1ada57e707381488f8162e13aca) — seller paid 4,087,520 (the agreed total less the 500,000 fee) |
+| refund (`batch-refund`) | [`33ed179a05cdeb71e73e8790459c2f67b277a103f509f06a0e6213f6c56ccc48`](https://explorer-tn10.kaspa.org/txs/33ed179a05cdeb71e73e8790459c2f67b277a103f509f06a0e6213f6c56ccc48) — 14,912,480 back to the buyer after the timeout |
 | a claim for the *reservation* | refused by your builder, your lane accounting, and the escrow script |
 
 A working product runs on it: **spigot** ([github.com/kaspahttp402/spigot](https://github.com/kaspahttp402/spigot))
@@ -82,7 +83,7 @@ Offered in the spirit of the handoff, not as criticism:
 
 ## Status, plainly
 
-- Two-sided metering, specified, implemented twice, 36 conformance vectors, 212 tests.
+- Two-sided metering, specified, implemented twice, 36 conformance vectors, 224 tests.
 - Settles on your `batch-settlement` escrow; proven on testnet-10; the covenant is yours, unmodified.
 - Not on mainnet — your escrow is alpha and unaudited for mainnet funds, which is the right gate.
 - No competing escrow, facilitator, or wire format remains.

@@ -18,3 +18,4 @@ export {
 export { loadSdk, loadAnchorKey, type Network } from './kaspa.js';
 export { awaitUtxo, type Any } from './live-steps.js';
 export { referenceToSdk, submitReference } from './rail-sdk.js';
+export { spendWallet, FEE_PER_INPUT, type Spend } from './wallet.js';

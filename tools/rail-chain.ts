@@ -115,7 +115,7 @@ export async function openChannel(
   if (!digest) throw new Error('genesis artifact carries no sighash');
   const artifact = buildBatchGenesisTxV1Artifact({ ...base, fundingInputs: [input(sign(digest, opts.buyerSk))], mass: unsigned.transaction.mass });
 
-  const txid = await submitReference(rpc, sdk, artifact);
+  const txid = await submitReference(rpc, sdk, artifact, opts.network);
   const landed = await awaitUtxo(rpc, sdk.addressFromScriptPublicKey(new sdk.ScriptPublicKey(0, escrowSpk.slice(4)), new sdk.NetworkId(opts.network)).toString(), opts.escrowSompi);
   if (!landed) throw new Error('the escrow UTXO never appeared');
 
@@ -162,7 +162,7 @@ export async function claimChannel(
   if (!digest) throw new Error('claim artifact carries no sighash');
   const artifact = build(signTx(digest, providerSk), BigInt(unsigned.transaction.mass));
 
-  const txid = await submitReference(rpc, sdk, artifact);
+  const txid = await submitReference(rpc, sdk, artifact, channel.network);
   return {
     txid,
     paidToSeller: BigInt(artifact.fee.serverOutputAmount),
@@ -208,7 +208,7 @@ export async function refundChannel(
   while (BigInt((await rpc.getBlockDagInfo()).virtualDaaScore) <= channel.timeoutDaa + 1n) {
     await new Promise((r) => setTimeout(r, 1000));
   }
-  const txid = await submitReference(rpc, sdk, artifact);
+  const txid = await submitReference(rpc, sdk, artifact, channel.network);
   return { txid, refunded: BigInt(artifact.fee.refundOutputAmount) };
 }
 
