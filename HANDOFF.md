@@ -83,7 +83,7 @@ Offered in the spirit of the handoff, not as criticism:
 
 ## Status, plainly
 
-- Two-sided metering, specified, implemented twice, 36 conformance vectors, 230 tests.
+- Two-sided metering, specified, implemented twice, 36 conformance vectors, 233 tests.
 - Settles on your `batch-settlement` escrow; proven on testnet-10; the covenant is yours, unmodified.
 - Not on mainnet — your escrow is alpha and unaudited for mainnet funds, which is the right gate.
 - No competing escrow, facilitator, or wire format remains.
