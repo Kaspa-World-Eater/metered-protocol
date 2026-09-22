@@ -118,8 +118,9 @@ for metering — but the transition machinery is exactly what supersede needs.
 **`return` must be last**, and there is a fixture-backed lowering for the singleton sugar.
 
 **Kurrent requires specific rusty-kaspa commits** for the lane-proof RPC (`2787953e`) and a
-covenant-output RPC conversion fix (`9fdbaf1b`). Anything we build against lane proofs needs
-`origin/master` or a descendant preserving those.
+covenant-output RPC conversion fix (`9fdbaf1b`). Both landed in the [`v2.1.0`
+tag](https://github.com/kaspanet/rusty-kaspa/releases/tag/v2.1.0), so anything we build against
+lane proofs can now pin `v2.1.0` (or later) instead of tracking `origin/master`.
 
 **`reorg_tolerance_daa` belongs in the channel policy hash** — the finality policy is part of what
 the parties agree to, not an implementation detail.
