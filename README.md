@@ -55,7 +55,7 @@ Neither party is trusted for anything. The arithmetic does not leave room.
 
 ```bash
 npm install
-npm test                 # 224 tests
+npm test                 # 230 tests
 npm run conformance      # regenerate the vectors
 npm run conformance:py   # the second implementation, against the same file
 ```
